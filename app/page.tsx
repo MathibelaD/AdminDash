@@ -1,4 +1,3 @@
-import Image from "next/image";
 import LoginForm from "./ui/Login/loginForm";
 
 export default function Home() {
