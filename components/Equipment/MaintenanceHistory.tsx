@@ -18,7 +18,7 @@ interface MaintenanceHistoryProps {
   equipmentName: string;
 }
 
-export default function MaintenanceHistory({ equipmentId, equipmentName }: MaintenanceHistoryProps) {
+export default function MaintenanceHistory({ equipmentName }: MaintenanceHistoryProps) {
   // Sample maintenance records
   const maintenanceRecords: MaintenanceRecord[] = [
     {

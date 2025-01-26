@@ -1,10 +1,10 @@
 'use client'
 import React, { useState } from 'react';
 import { 
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
-import { DollarSign, TrendingUp, Package, ArrowUp, ArrowDown } from 'lucide-react';
+import { DollarSign, TrendingUp, Package, ArrowUp } from 'lucide-react';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 

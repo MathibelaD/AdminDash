@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react';
-import { 
+import {
   Home,
   ChefHat,
   Users,
@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 export default function Sidebar() {
+
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
 
@@ -32,7 +33,6 @@ export default function Sidebar() {
     // { name: 'Announcements', href: '/dashboard/announcements', icon: Bell },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
-
   return (
     <div className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white border-r border-gray-200 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-64'}`}>
       <div className="flex flex-col h-full">
@@ -57,14 +57,13 @@ export default function Sidebar() {
           {links.map((link) => {
             const Icon = link.icon;
             const isActive = pathname === link.href;
-            
             return (
               <Link
                 key={link.name}
                 href={link.href}
                 className={`flex items-center space-x-2 px-4 py-3 rounded-lg transition-colors duration-150 
-                  ${isActive 
-                    ? 'bg-blue-50 text-blue-600' 
+                  ${isActive
+                    ? 'bg-blue-50 text-blue-600'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600'}`}
               >
                 <Icon className={`w-6 h-6 ${isActive ? 'text-blue-600' : 'text-gray-500'}`} />

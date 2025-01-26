@@ -1,6 +1,6 @@
 'use client'
 import React from 'react';
-import { X, Phone, MapPin } from 'lucide-react';
+import { X, Phone } from 'lucide-react';
 import { Order } from './OrderTypes';
 
 
