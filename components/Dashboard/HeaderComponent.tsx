@@ -109,11 +109,14 @@ export default function HeaderComponent() {
                   src="https://avatars.githubusercontent.com/u/92311415?v=4"
                   alt="Ms Mathibela"
                   className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                  width={40}
+                  height={40}
                 />
                 <div className="hidden md:block text-left">
                   <p className="text-sm font-medium text-gray-900">Ms Mathibela</p>
                   <p className="text-xs text-gray-500">Restaurant Admin</p>
                 </div>
+                
                 {isProfileOpen ? (
                   <ChevronUp className="w-5 h-5 text-gray-500" />
                 ) : (
