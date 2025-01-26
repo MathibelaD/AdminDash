@@ -27,7 +27,7 @@ export default function Sidebar() {
     { name: 'Inventory', href: '/dashboard/inventory', icon: Calendar },
     { name: 'Equipment', href: '/dashboard/equipment', icon: BarChart2 },
     { name: 'Waste Tracking', href: '/dashboard/waste', icon: Trash },
-    { name: 'Reviews', href: '/dashboard/reviews', icon: Users },
+    { name: 'Reviews', href: '/dashboard/reviews', icon: Users }, 
     // { name: 'Staff', href: '/dashboard/staff', icon: UserCog },
     // { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart2 },
     // { name: 'Announcements', href: '/dashboard/announcements', icon: Bell },
