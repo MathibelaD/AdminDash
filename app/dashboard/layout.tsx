@@ -1,6 +1,6 @@
 
 import HeaderComponent from '@/components/Dashboard/HeaderComponent';
-import { Sidebar } from 'lucide-react';
+import Sidebar from '@/components/Dashboard/nav-links';
 import React from 'react';
 
 

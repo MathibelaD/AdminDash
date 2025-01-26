@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true, // Skips ESLint during builds
   },
+  images: {
+    domains: ['avatars.githubusercontent.com'],
+  }
 };
 
 export default nextConfig;

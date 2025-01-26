@@ -1,14 +1,7 @@
 'use client'
 import React from 'react'; 
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, LineChart, Line 
-} from 'recharts';
-import { 
-  TrendingUp, ShoppingBag, 
-  ArrowUp, ArrowDown, Clock, AlertTriangle,
-  Package, DollarSign, ChevronRight
-} from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { TrendingUp, ShoppingBag, ArrowUp, ArrowDown, Clock, AlertTriangle, Package, DollarSign, ChevronRight } from 'lucide-react';
 
 const salesData = [
   { name: 'Mon', sales: 4000 },
@@ -63,15 +56,14 @@ const inventoryAlerts = [
 export default function Dashboard() {
   return (
     <div className="p-6">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="text-gray-600">Welcome back, Admin</p>
       </div>
 
-      {/* Stats Cards */}
+     
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Today's Revenue */}
+        
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -82,10 +74,10 @@ export default function Dashboard() {
             </span>
           </div>
           <h3 className="text-gray-600 text-sm">Todays Revenue</h3>
-          <p className="text-2xl font-bold">R4,500.00</p>
+          <p className="text-2xl font-bold">R500.00</p>
         </div>
 
-        {/* Total Orders */}
+       
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -96,10 +88,10 @@ export default function Dashboard() {
             </span>
           </div>
           <h3 className="text-gray-600 text-sm">Total Orders</h3>
-          <p className="text-2xl font-bold">82</p>
+          <p className="text-2xl font-bold">5</p>
         </div>
 
-        {/* Inventory Value */}
+       
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-purple-100 rounded-lg">
@@ -107,10 +99,10 @@ export default function Dashboard() {
             </div>
           </div>
           <h3 className="text-gray-600 text-sm">Inventory Value</h3>
-          <p className="text-2xl font-bold">R15,250.00</p>
+          <p className="text-2xl font-bold">R5,250.00</p>
         </div>
 
-        {/* Net Profit */}
+      
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-yellow-100 rounded-lg">
@@ -125,7 +117,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Alert Section */}
+     
       {inventoryAlerts.length > 0 && (
         <div className="mb-8 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
           <div className="flex items-center">
@@ -142,9 +134,9 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Charts Section */}
+    
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Weekly Sales Chart */}
+       
         <div className="bg-white p-6 rounded-lg shadow">
           <h3 className="text-lg font-medium mb-4">Weekly Sales</h3>
           <div className="h-80">
@@ -160,7 +152,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Popular Items Chart */}
+        
         <div className="bg-white p-6 rounded-lg shadow">
           <h3 className="text-lg font-medium mb-4">Popular Items</h3>
           <div className="h-80">
@@ -177,7 +169,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Recent Orders */}
+    
       <div className="bg-white rounded-lg shadow mb-8">
         <div className="p-6 border-b flex justify-between items-center">
           <h3 className="text-lg font-medium">Recent Orders</h3>
