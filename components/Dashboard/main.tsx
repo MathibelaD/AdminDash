@@ -81,7 +81,7 @@ export default function Dashboard() {
               <ArrowUp className="w-4 h-4 mr-1" />12%
             </span>
           </div>
-          <h3 className="text-gray-600 text-sm">Today's Revenue</h3>
+          <h3 className="text-gray-600 text-sm">Todays Revenue</h3>
           <p className="text-2xl font-bold">R4,500.00</p>
         </div>
 

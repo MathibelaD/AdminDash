@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react';
-import { Trash2, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import WasteAnalytics from './WasteAnalytics';
 import WasteEntryForm from './WasteEntryForm';
 import WasteLogTable from './WasteLogTable';

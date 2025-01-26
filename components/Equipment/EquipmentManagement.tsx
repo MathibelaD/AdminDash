@@ -3,13 +3,7 @@ import React, { useState } from 'react';
 import { 
     Wrench, 
   Plus, 
-  AlertTriangle, 
-  Calendar,
-  Phone,
-  FileText,
-  Clock,
-  CheckCircle,
-  XCircle
+  AlertTriangle
 } from 'lucide-react';
 
 interface Equipment {
@@ -26,11 +20,11 @@ interface Equipment {
 }
 
 export default function EquipmentManagement() {
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [, setShowAddModal] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('all');
 
   // Sample equipment data
-  const [equipment, setEquipment] = useState<Equipment[]>([
+  const [equipment, ] = useState<Equipment[]>([
     {
       id: 1,
       name: "Deep Fryer - Large",
