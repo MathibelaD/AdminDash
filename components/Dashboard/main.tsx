@@ -1,11 +1,11 @@
 'use client'
-import React from 'react';
+import React from 'react'; 
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, LineChart, Line 
 } from 'recharts';
 import { 
-  TrendingUp, ShoppingBag, Users, Star, 
+  TrendingUp, ShoppingBag, 
   ArrowUp, ArrowDown, Clock, AlertTriangle,
   Package, DollarSign, ChevronRight
 } from 'lucide-react';

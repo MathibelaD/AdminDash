@@ -9,8 +9,7 @@ import {
   Settings,
   LogOut,
   User,
-  HelpCircle,
-  Mail
+  HelpCircle
 } from 'lucide-react';
 
 export default function Header() {
