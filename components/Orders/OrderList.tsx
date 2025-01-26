@@ -10,7 +10,7 @@ interface OrderListProps {
   onStatusChange: (orderId: number, status: Order['status']) => void;
 }
 
-export default function OrderList({ orders, onSelectOrder, onStatusChange }: OrderListProps) {
+export default function OrderList({ orders, onSelectOrder }: OrderListProps) {
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
       case 'pending':

@@ -1,13 +1,10 @@
 'use client'
 import React, { useState } from 'react';
 import { 
-  Star, 
-  ThumbsUp, 
-  ThumbsDown, 
+  Star,
   Search,
   CheckCircle,
-  XCircle,
-  Filter
+  XCircle
 } from 'lucide-react';
 
 interface Review {

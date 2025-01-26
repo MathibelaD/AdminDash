@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { PlusCircle } from 'lucide-react';
 import AddMenuItem from './AddMenuItem';
-import { MenuTable } from './MenuTable';
 import { SearchFilters } from './SearchFilters';
+import MenuTable from './MenuTable';
 
 
 export default function MenuManagement() {

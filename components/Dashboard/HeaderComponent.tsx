@@ -11,8 +11,9 @@ import {
   User,
   HelpCircle
 } from 'lucide-react';
+import Image from 'next/image';
 
-export default function Header() {
+export default function HeaderComponent() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications] = useState([
@@ -104,7 +105,7 @@ export default function Header() {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                <img
+                <Image
                   src="https://avatars.githubusercontent.com/u/92311415?v=4"
                   alt="Ms Mathibela"
                   className="w-8 h-8 rounded-full object-cover border border-gray-200"

@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react';
-import { Search, Filter, FileDown, FileUp, Edit, Trash2, MoreVertical } from 'lucide-react';
+import { Search, FileDown, Edit, Trash2 } from 'lucide-react';
 
 interface WasteLog {
   id: number;

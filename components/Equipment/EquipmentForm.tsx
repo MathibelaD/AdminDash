@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react';
-import { X, Save, Calendar } from 'lucide-react';
+import { X, Save } from 'lucide-react';
 
 interface EquipmentFormProps {
   isOpen: boolean;
