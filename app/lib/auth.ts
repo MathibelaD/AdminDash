@@ -84,7 +84,7 @@ export const authOptions: NextAuthOptions = {
           email: token.email!,
         },
       });
-
+`s`
       if (!dbUser) {
         return token;
       }

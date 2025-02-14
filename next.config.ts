@@ -6,7 +6,20 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true, // Skips ESLint during builds
   },
   images: {
-    domains: ['avatars.githubusercontent.com', 'www.istockphoto.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.istockphoto.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+    ],
   }
 };
 
