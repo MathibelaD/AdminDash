@@ -23,7 +23,7 @@ export default function LoginComponent() {
                 redirect: false,
             });
 
-            if (result?.error) {
+            if (result?.error) { 
                 setError("Invalid email or password");
                 setIsLoading(false);
                 return;
