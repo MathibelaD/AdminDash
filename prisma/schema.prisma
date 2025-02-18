@@ -8,24 +8,34 @@ generator client {
 }
 
 model User {
-  id       String @id @default(uuid())
-  email    String @unique
-  password String
-
+  id           String   @id @default(uuid())
+  email        String   @unique
+  password     String
   firstName    String
   lastName     String
   profileImage String?
+  role         UserRole @default(CUSTOMER) // Changed default to CUSTOMER
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  // Metadata
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  // Auth relations
   accounts Account[]
   sessions Session[]
+
+  // Order relations
+  customerOrders   Order[]            @relation("CustomerOrders") // Orders placed by this user
+  processedOrders  Order[]            @relation("ProcessedOrders") // Orders processed by this staff member
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+  MANAGER
+  CUSTOMER
 }
 
 model Account {
-  id                String  @id @default(cuid())
+  id                String  @id @default(uuid())
   userId            String
   type              String
   provider          String
@@ -37,14 +47,13 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
 
 model Session {
-  id           String   @id @default(cuid())
+  id           String   @id @default(uuid())
   sessionToken String   @unique
   userId       String
   expires      DateTime
@@ -57,4 +66,167 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model MenuItem {
+  id          String          @id @default(uuid())
+  name        String
+  description String?
+  price       Decimal         @db.Decimal(10, 2)
+  category    MenuCategory    @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  image       String?
+  isAvailable Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  orderItems  OrderItem[]
+  ingredients InventoryItem[]
+  costPerUnit Decimal         @db.Decimal(10, 2)
+}
+
+model MenuCategory {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  items       MenuItem[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  orderNumber String      @unique
+  status      OrderStatus @default(PENDING)
+  orderType   OrderType
+
+  // Customer relationship
+  customer   User   @relation("CustomerOrders", fields: [customerId], references: [id])
+  customerId String
+
+  // Staff member who processed the order
+  processedBy   User?   @relation("ProcessedOrders", fields: [processedById], references: [id])
+  processedById String?
+
+  tableNumber   Int?
+  items         OrderItem[]
+  subtotal      Decimal        @db.Decimal(10, 2)
+  tax           Decimal        @default(15.0) @db.Decimal(10, 2)
+  total         Decimal        @db.Decimal(10, 2)
+  paymentStatus PaymentStatus  @default(PENDING)
+  paymentMethod PaymentMethod?
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  order      Order    @relation(fields: [orderId], references: [id])
+  orderId    String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItemId String
+  quantity   Int
+  unitPrice  Decimal  @db.Decimal(10, 2)
+  totalPrice Decimal  @db.Decimal(10, 2)
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  PREPARING
+  READY
+  DELIVERY
+  CANCELLED
+  COMPLETED
+}
+
+enum OrderType {
+  DINE_IN
+  TAKEAWAY //collection
+  DELIVERY
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  MOBILE_PAYMENT
+}
+
+model InventoryItem {
+  id           String        @id @default(uuid())
+  name         String
+  description  String?
+  category     StockCategory @relation(fields: [categoryId], references: [id])
+  categoryId   String
+  currentStock Int           @default(0)
+  minimumStock Int           @default(30)
+  unit         String // e.g., kg, pieces, boxes
+  costPerUnit  Decimal       @db.Decimal(10, 2)
+  isActive     Boolean       @default(true)
+  stockTransactions StockTransaction[]
+  supplier          Supplier?          @relation(fields: [supplierId], references: [id])
+  supplierId        String?
+  menuItems         MenuItem[] // Relation to menu items that use this inventory item
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StockCategory {
+  id          String          @id @default(uuid())
+  name        String          @unique
+  description String?
+  items       InventoryItem[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model StockTransaction {
+  id          String          @id @default(uuid())
+  type        TransactionType
+  item        InventoryItem   @relation(fields: [itemId], references: [id])
+  itemId      String
+  quantity    Int
+  costPerUnit Decimal         @db.Decimal(10, 2)
+  totalCost   Decimal         @db.Decimal(10, 2)
+  supplier      Supplier? @relation(fields: [supplierId], references: [id])
+  supplierId    String?
+  invoiceNumber String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Supplier {
+  id            String  @id @default(uuid())
+  name          String
+  contactPerson String?
+  email         String?
+  phone         String?
+  address       String?
+
+  // Relationships
+  items        InventoryItem[]
+  transactions StockTransaction[]
+
+  // Metadata
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum TransactionType {
+  PURCHASE // Adding new stock
+  USAGE // Regular usage in operations
+  ADJUSTMENT // Inventory corrections
+  WASTAGE // Recorded waste
+  RETURN // Returns to supplier
 }
