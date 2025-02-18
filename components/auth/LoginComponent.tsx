@@ -29,6 +29,7 @@ export default function LoginComponent() {
                 return;
             }
 
+            console.log("To Dashboard")
             router.push("/dashboard");
             router.refresh();
         } catch (error) {
