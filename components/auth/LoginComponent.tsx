@@ -13,36 +13,33 @@ export default function LoginComponent() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("Submit started"); // Debug log 1
         setIsLoading(true);
         setError("");
     
         try {
-            console.log("Making signIn call"); // Debug log 2
             const result = await signIn("credentials", {
                 email,
                 password,
                 redirect: false,
                 callbackUrl: "/dashboard"
             });
-            
-            console.log("SignIn result:", result); // Debug log 3
+    
+            console.log("SignIn result:", result);
     
             if (!result?.ok) {
-                console.log("Error in result:", result?.error); // Debug log 4
-                setError(result?.error || "Invalid email or password");
+                setError(result?.error || "Invalid credentials");
                 setIsLoading(false);
                 return;
             }
     
-            console.log("Attempting redirect"); // Debug log 5
-            await router.push("/dashboard");
-            
+            if (result.url) {
+                window.location.href = result.url;
+            } else {
+                router.push("/dashboard");
+            }
         } catch (error) {
-            console.log("Caught error:", error); // Debug log 6
             setError("An error occurred during sign in");
         } finally {
-            console.log("Finally block reached"); // Debug log 7
             setIsLoading(false);
         }
     };

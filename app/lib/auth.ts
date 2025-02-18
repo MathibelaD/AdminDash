@@ -3,8 +3,6 @@ import { prisma } from "../lib/prisma";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { JWT } from "next-auth/jwt";
-import { Session } from "next-auth";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -19,6 +17,8 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
+        console.log("Authorize function called"); // Debug log
+
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Invalid credentials');
         }
@@ -53,9 +53,20 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: "/auth/signin",
+    error: "/auth/error", // Add error page
+    newUser: "/auth/new-user" // Optional: redirect new users here
   },
   callbacks: {
-    async session({ session, token }: { session: Session; token: JWT }) {
+    async redirect({ url, baseUrl }) {
+      console.log("Redirect callback:", { url, baseUrl }); // Debug log
+      // Allows relative callback URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      // Allows callback URLs on the same origin
+      else if (new URL(url).origin === baseUrl) return url
+      return baseUrl
+    },
+    async session({ session, token }) {
+      console.log("Session callback:", { session, token }); // Debug log
       if (token) {
         session.user = {
           id: token.id,
@@ -67,6 +78,8 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async jwt({ token, user, account }) {
+      console.log("JWT callback:", { token, user, account }); // Debug log
+      
       // Initial sign in
       if (account && user) {
         return {
@@ -84,7 +97,7 @@ export const authOptions: NextAuthOptions = {
           email: token.email!,
         },
       });
-`s`
+
       if (!dbUser) {
         return token;
       }
@@ -99,7 +112,8 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === "development",
+  debug: true, // Enable debug logs in both dev and prod temporarily
 };
