@@ -172,7 +172,6 @@ model InventoryItem {
   unit         String // e.g., kg, pieces, boxes
   costPerUnit  Decimal       @db.Decimal(10, 2)
   isActive     Boolean       @default(true)
-  stockTransactions StockTransaction[]
   supplier          Supplier?          @relation(fields: [supplierId], references: [id])
   supplierId        String?
   menuItems         MenuItem[] // Relation to menu items that use this inventory item
@@ -189,21 +188,6 @@ model StockCategory {
   updatedAt   DateTime        @updatedAt
 }
 
-model StockTransaction {
-  id          String          @id @default(uuid())
-  type        TransactionType
-  item        InventoryItem   @relation(fields: [itemId], references: [id])
-  itemId      String
-  quantity    Int
-  costPerUnit Decimal         @db.Decimal(10, 2)
-  totalCost   Decimal         @db.Decimal(10, 2)
-  supplier      Supplier? @relation(fields: [supplierId], references: [id])
-  supplierId    String?
-  invoiceNumber String?
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
 
 model Supplier {
   id            String  @id @default(uuid())
@@ -215,8 +199,6 @@ model Supplier {
 
   // Relationships
   items        InventoryItem[]
-  transactions StockTransaction[]
-
   // Metadata
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
