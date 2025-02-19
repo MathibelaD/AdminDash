@@ -23,20 +23,15 @@ export default function LoginComponent() {
                 redirect: false,
                 callbackUrl: "/dashboard"
             });
-    
-            console.log("SignIn result:", result);
-    
-            if (!result?.ok) {
-                setError(result?.error || "Invalid credentials");
+  if (result?.error) { 
+                setError("Invalid email or password");
                 setIsLoading(false);
                 return;
             }
-    
-            if (result.url) {
-                window.location.href = result.url;
-            } else {
-                router.push("/dashboard");
-            }
+
+            console.log("To Dashboard")
+            router.push("/dashboard");
+            router.refresh();
         } catch (error) {
             setError("An error occurred during sign in");
         } finally {
