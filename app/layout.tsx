@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/providers/AuthProvider";
+import AuthProvider from "@/providers/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     default: 'Kota App',
   },
   description: 'The official Kota App ',
-  metadataBase: new URL('https://admin-dash-dun.vercel.app/'),
+  metadataBase: new URL('https://admin-dash-dun.vercel.app'),
 };
 
 export default function RootLayout({

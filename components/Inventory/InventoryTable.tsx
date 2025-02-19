@@ -1,15 +1,20 @@
 'use client'
 import React, { useEffect, useState } from 'react';
-import { AlertCircle, Save, X, Search, Plus } from 'lucide-react';
+import { AlertCircle, Save, X, Search, Plus, Loader2 } from 'lucide-react';
+import { format } from 'date-fns'
 
 interface InventoryItem {
-  id: number;
+  id: string;
   name: string;
-  category: string;
-  inStock: number;
-  minRequired: number;
+  category: {
+    id: string;
+    name: string;
+  };
+  currentStock: number;
+  minimumStock: number;
   costPerUnit: number;
-  lastRestocked: string;
+  unit: string;
+  updatedAt: string;
 }
 
 export default function InventoryTable() {
@@ -26,14 +31,20 @@ export default function InventoryTable() {
     name: '',
     quantity: 0,
     costPerUnit: 0,
+    minimumStock: 0,
     category: '',
     supplier: '',
     invoiceNumber: '',
+    unit: '',
+
     date: new Date().toISOString().split('T')[0]
   });
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [isLoadingInventory, setIsLoadingInventory] = useState(true);
 
   useEffect(() => {
     fetchCategories();
+    fetchInventory();
   }, []);
 
   const fetchCategories = async () => {
@@ -47,21 +58,83 @@ export default function InventoryTable() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const fetchInventory = async () => {
+    setIsLoadingInventory(true);
+    try {
+      const response = await fetch('/api/inventory');
+      if (!response.ok) throw new Error('Failed to fetch inventory');
+      const data = await response.json();
+      setInventoryItems(data);
+    } catch (error) {
+      console.error('Error fetching inventory:', error);
+    } finally {
+      setIsLoadingInventory(false);
+    }
+  };
+
+  // Update your filtering logic to work with the new data structure
+  const filteredItems = inventoryItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = filterCategory === 'all' || item.category.name === filterCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const uniqueCategories = ['all', ...new Set(inventoryItems.map(item => item.category.name))];
+
+  // Calculate low stock items
+  const lowStockItems = inventoryItems.filter(item => item.currentStock <= item.minimumStock);
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const itemWithId = { ...newItem, id: Date.now() };
-    setRecentEntries([itemWithId, ...recentEntries]);
-    setShowModal(false);
-    setNewItem({
-      id: 0,
-      name: '',
-      quantity: 0,
-      costPerUnit: 0,
-      category: '',
-      supplier: '',
-      invoiceNumber: '',
-      date: new Date().toISOString().split('T')[0]
-    });
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newItem.name,
+          categoryId: newItem.category, // This should be the category ID
+          currentStock: newItem.quantity,
+          costPerUnit: newItem.costPerUnit,
+          unit: 'pieces', // You might want to add a unit selector to your form
+          supplierId: null, // If you have supplier IDs, add them here
+          description: '', // Add description field to your form if needed
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create inventory item');
+      }
+
+      const savedItem = await response.json();
+
+      // Update your local state
+      setRecentEntries([savedItem, ...recentEntries]);
+
+      // Reset form and close modal
+      setNewItem({
+        id: 0,
+        name: '',
+        quantity: 0,
+        costPerUnit: 0,
+        category: '',
+        supplier: '',
+        invoiceNumber: '',
+        date: new Date().toISOString().split('T')[0]
+      });
+
+      setShowModal(false);
+      console.log("Stock item added successfully");
+      //toast.success('Stock item added successfully');
+    } catch (error) {
+      console.error('Error saving inventory item:', error);
+      //toast.error(error instanceof Error ? error.message : 'Failed to save stock item');
+    }
   };
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
@@ -98,24 +171,12 @@ export default function InventoryTable() {
     value: cat.id, label: cat.name
   }));
   // Sample data - replace with real data
-  const inventoryData: InventoryItem[] = [
-    { id: 1, name: 'Bread Roll', category: 'Base', inStock: 150, minRequired: 100, costPerUnit: 8, lastRestocked: '2024-01-10' },
-    { id: 2, name: 'French Fries', category: 'Sides', inStock: 80, minRequired: 100, costPerUnit: 15, lastRestocked: '2024-01-09' },
-    { id: 3, name: 'Polony', category: 'Meats', inStock: 120, minRequired: 50, costPerUnit: 12, lastRestocked: '2024-01-11' },
-    { id: 4, name: 'Cheese Slice', category: 'Dairy', inStock: 30, minRequired: 50, costPerUnit: 8, lastRestocked: '2024-01-08' },
-  ];
 
-  const categ = ['all', ...Array.from(new Set(inventoryData.map(item => item.category)))];
-  const lowStockItems = inventoryData.filter(item => item.inStock <= item.minRequired);
 
-  const filteredItems = inventoryData.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
-    return matchesSearch && matchesCategory;
-  });
 
   return (
     <div className="space-y-6">
+      {/* Stock Entry buttons */}
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">Inventory Entry</h2>
         <div className="flex gap-3">
@@ -135,6 +196,7 @@ export default function InventoryTable() {
           </button>
         </div>
       </div>
+
       {/* Low Stock Alert */}
       {lowStockItems.length > 0 && (
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
@@ -145,14 +207,14 @@ export default function InventoryTable() {
           <div className="mt-2">
             {lowStockItems.map(item => (
               <p key={item.id} className="text-sm text-yellow-700">
-                {item.name} - Only {item.inStock} units remaining (Minimum: {item.minRequired})
+                {item.name} - Only {item.currentStock} {item.unit} remaining (Minimum: {item.minimumStock})
               </p>
             ))}
           </div>
         </div>
       )}
 
-      {/* Filters */}
+      {/* Search && Filters */}
       <div className="flex gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -169,9 +231,9 @@ export default function InventoryTable() {
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
         >
-          {categ.map(catego => (
-            <option key={catego} value={catego}>
-              {catego.charAt(0).toUpperCase() + catego.slice(1)}
+          {uniqueCategories.map(category => (
+            <option key={category} value={category}>
+              {category.charAt(0).toUpperCase() + category.slice(1)}
             </option>
           ))}
         </select>
@@ -183,39 +245,50 @@ export default function InventoryTable() {
           <h3 className="text-lg font-medium">Current Inventory</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">In Stock</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Min Required</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cost Per Unit</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Restocked</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredItems.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">{item.name}</td>
-                  <td className="px-6 py-4">{item.category}</td>
-                  <td className="px-6 py-4">{item.inStock}</td>
-                  <td className="px-6 py-4">{item.minRequired}</td>
-                  <td className="px-6 py-4">R{item.costPerUnit}</td>
-                  <td className="px-6 py-4">{item.lastRestocked}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium
-                      ${item.inStock <= item.minRequired ?
-                        'bg-red-100 text-red-800' :
-                        'bg-green-100 text-green-800'}`}>
-                      {item.inStock <= item.minRequired ? 'Low Stock' : 'In Stock'}
-                    </span>
-                  </td>
+          {isLoadingInventory ? (
+            <div className="flex justify-center items-center p-8">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">In Stock</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Min Required</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cost Per Unit</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Updated</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredItems.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">{item.name}</td>
+                    <td className="px-6 py-4">{item.category?.name}</td>
+                    <td className="px-6 py-4">{item.currentStock}</td>
+                    <td className="px-6 py-4">{item.minimumStock}</td>
+                    <td className="px-6 py-4">R{Number(item.costPerUnit).toFixed(2)}</td>
+                    <td className="px-6 py-4">{format(new Date(item.updatedAt), ' d MMM yyyy')}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium
+                        ${item.currentStock <= item.minimumStock ?
+                          'bg-red-100 text-red-800' :
+                          'bg-green-100 text-green-800'}`}>
+                        {item.currentStock <= item.minimumStock ? 'Low Stock' : 'In Stock'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {!isLoadingInventory && filteredItems.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              No inventory items found
+            </div>
+          )}
         </div>
       </div>
 
@@ -267,6 +340,26 @@ export default function InventoryTable() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Unit
+                  </label>
+                  <select
+                    required
+                    className="w-full p-2 border rounded-lg"
+                    value={newItem.unit}
+                    onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
+                  >
+                    <option value="">Select Unit</option>
+                    <option value="pieces">Pieces</option>
+                    <option value="kg">Kilograms</option>
+                    <option value="liters">Liters</option>
+                    <option value="slices">Slices</option>
+                    <option value="cans">Cans</option>
+                    <option value="heads">Heads</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Quantity
                   </label>
                   <input
@@ -278,6 +371,22 @@ export default function InventoryTable() {
                     onChange={(e) => setNewItem({ ...newItem, quantity: Number(e.target.value) })}
                   />
                 </div>
+
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Minimum Stock
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    className="w-full p-2 border rounded-lg"
+                    value={newItem.minimumStock || ''}
+                    onChange={(e) => setNewItem({ ...newItem, minimumStock: Number(e.target.value) })}
+                  />
+                </div>
+
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -342,10 +451,11 @@ export default function InventoryTable() {
                 </button>
                 <button
                   type="submit"
+                  disabled={isLoading}
                   className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                   <Save className="w-5 h-5 mr-2" />
-                  Save Entry
+                  {isLoading ? 'Saving...' : 'Save Entry'}
                 </button>
               </div>
             </form>
