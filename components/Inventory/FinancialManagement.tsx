@@ -1,7 +1,6 @@
 'use client'
 import React, { useState } from 'react';
 import InventoryTable from './InventoryTable';
-import StockEntry from './StockEntry';
 import FinancialAnalytics from './FinanceAnalytics';
 
 
@@ -19,12 +18,7 @@ export default function InventoryManagement() {
           >
             Inventory
           </button>
-          <button
-            className={`px-4 py-2 ${activeTab === 'stock' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('stock')}
-          >
-            Stock Entry
-          </button>
+          
           <button
             className={`px-4 py-2 ${activeTab === 'analytics' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
             onClick={() => setActiveTab('analytics')}
@@ -35,7 +29,6 @@ export default function InventoryManagement() {
       </div>
 
       {activeTab === 'inventory' && <InventoryTable />}
-      {activeTab === 'stock' && <StockEntry />}
       {activeTab === 'analytics' && <FinancialAnalytics />}
     </div>
   );
