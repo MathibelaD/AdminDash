@@ -17,32 +17,51 @@ export default function LoginComponent() {
         setIsLoading(true);
         setError("");
 
-        // try {
-        //     const result = await signIn("credentials", {
-        //         email,
-        //         password,
-        //         redirect: false,
-        //     });
+        try {
+            const result = await signIn("credentials", {
+                email,
+                password,
+                redirect: false,
+            });
 
-        //     if (result?.error) { 
-        //         setError("Invalid email or password");
-        //         setIsLoading(false);
-        //         return;
-        //     }
+            if (result?.error) { 
+                setError("Invalid email or password");
+                setIsLoading(false);
+                return;
+            }
 
-        //     console.log("To Dashboard")
-        //     router.push("/dashboard");
-        //     router.refresh();
-        // } catch (error) {
-        //     setError("An error occurred during sign in");
-        //     setIsLoading(false);
-        // }
+            console.log("To Dashboard")
+            router.push("/dashboard");
+            router.refresh();
+        } catch (error) {
+            setError("An error occurred during sign in");
+            setIsLoading(false);
+        }
     };
 
-    const handleGoogleSignIn = () => {
+    const handleGoogleSignIn = async () => {
+    try {
         setIsLoading(true);
-        signIn("google", { callbackUrl: "/dashboard" });
-    };
+        const result = await signIn("google", {
+            callbackUrl: "/dashboard",
+            redirect: false  // This gives us more control over the redirect
+        });
+
+        if (result?.error) {
+            setError(result.error);
+            return;
+        }
+
+        // If successful, manually redirect
+        if (result?.url) {
+            router.push(result.url);
+        }
+    } catch (error) {
+        setError("An error occurred during Google sign in");
+    } finally {
+        setIsLoading(false);  // Make sure to reset loading state
+    }
+};
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
