@@ -49,7 +49,7 @@ export default function Profile() {
               <span className="absolute bottom-2 right-2 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
             </div>
             <div className="text-white">
-              <h1 className="text-3xl font-bold">{session?.user?.name }</h1>
+              <h1 className="text-3xl font-bold">{session?.user?.name  || "User"}</h1>
               <p className="text-blue-100 text-lg">Resturant Admin Manager</p>
               <div className="flex items-center mt-2 text-blue-100">
                 <MapPin className="w-4 h-4 mr-1" />
