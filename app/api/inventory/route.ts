@@ -1,7 +1,7 @@
 // app/api/inventory/route.ts
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
-import { Prisma } from '@prisma/client';
+import Prisma from '@prisma/client';
 
 export async function POST(request: Request) {
   try {
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
         description: body.description || null,
         categoryId: body.categoryId,
         currentStock: Number(body.currentStock),
-        costPerUnit: new Prisma.Decimal(body.costPerUnit.toString()), // Convert to Decimal properly
+        costPerUnit: body.costPerUnit.toString(), // Convert to Decimal properly
         unit: body.unit || 'pieces',
         minimumStock: Number(body.minimumStock) || 30,
         supplierId: body.supplierId || null,
@@ -72,7 +72,7 @@ export async function GET(request: Request) {
     });
 
     // Convert Decimal to string for JSON serialization
-    const serializedItems = inventoryItems.map(item => ({
+    const serializedItems = inventoryItems.map((item: { costPerUnit: { toString: () => any; }; }) => ({
       ...item,
       costPerUnit: item.costPerUnit.toString()
     }));
