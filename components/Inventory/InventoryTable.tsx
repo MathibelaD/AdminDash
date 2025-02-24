@@ -17,6 +17,31 @@ interface InventoryItem {
   updatedAt: string;
 }
 
+// Add missing interfaces
+interface NewCategory {
+  name: string;
+  description: string;
+}
+
+interface StockCategory {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+interface StockItem {
+  id: number;
+  name: string;
+  quantity: number;
+  costPerUnit: number;
+  minimumStock: number;
+  category: string;
+  supplier: string;
+  invoiceNumber: string;
+  unit: string;
+  date: string;
+}
+
 export default function InventoryTable() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filterCategory, setFilterCategory] = React.useState('all');
@@ -36,13 +61,14 @@ export default function InventoryTable() {
     supplier: '',
     invoiceNumber: '',
     unit: '',
-
     date: new Date().toISOString().split('T')[0]
   });
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [isLoadingInventory, setIsLoadingInventory] = useState(true);
 
+  // Only fetch data on initial load, no automatic interval
   useEffect(() => {
+    // Initial fetch
     fetchCategories();
     fetchInventory();
   }, []);
@@ -85,6 +111,17 @@ export default function InventoryTable() {
   const lowStockItems = inventoryItems.filter(item => item.currentStock <= item.minimumStock);
 
 
+  // Track if a new stock item has been added
+  const [stockAdded, setStockAdded] = useState(false);
+  
+  // Use effect to refresh inventory when stockAdded is true
+  useEffect(() => {
+    if (stockAdded) {
+      fetchInventory();
+      setStockAdded(false);
+    }
+  }, [stockAdded]);
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -100,9 +137,12 @@ export default function InventoryTable() {
           categoryId: newItem.category, // This should be the category ID
           currentStock: newItem.quantity,
           costPerUnit: newItem.costPerUnit,
-          unit: 'pieces', // You might want to add a unit selector to your form
+          minimumStock: newItem.minimumStock, // Add this line
+          unit: newItem.unit, // Use the selected unit
           supplierId: null, // If you have supplier IDs, add them here
           description: '', // Add description field to your form if needed
+          supplier: newItem.supplier, // Add supplier info
+          invoiceNumber: newItem.invoiceNumber, // Add invoice info
         }),
       });
 
@@ -115,6 +155,9 @@ export default function InventoryTable() {
 
       // Update your local state
       setRecentEntries([savedItem, ...recentEntries]);
+      
+      // Set the stockAdded flag to trigger inventory refresh
+      setStockAdded(true);
 
       // Reset form and close modal
       setNewItem({
@@ -122,9 +165,11 @@ export default function InventoryTable() {
         name: '',
         quantity: 0,
         costPerUnit: 0,
+        minimumStock: 0,
         category: '',
         supplier: '',
         invoiceNumber: '',
+        unit: '',
         date: new Date().toISOString().split('T')[0]
       });
 
@@ -134,6 +179,8 @@ export default function InventoryTable() {
     } catch (error) {
       console.error('Error saving inventory item:', error);
       //toast.error(error instanceof Error ? error.message : 'Failed to save stock item');
+    } finally {
+      setIsLoading(false); // Make sure isLoading is always reset
     }
   };
 
@@ -159,6 +206,10 @@ export default function InventoryTable() {
       setCategories([...categories, savedCategory]);
       setNewCategory({ name: '', description: '' });
       setShowCategoryModal(false);
+      
+      // Also refresh inventory data in case it's affected by category changes
+      await fetchInventory();
+      
       console.log("Category added successfully");
     } catch (error) {
       console.error('Error saving category:', error);
@@ -170,9 +221,6 @@ export default function InventoryTable() {
   const categoryOptions = categories.map(cat => ({
     value: cat.id, label: cat.name
   }));
-  // Sample data - replace with real data
-
-
 
   return (
     <div className="space-y-6">
@@ -270,7 +318,7 @@ export default function InventoryTable() {
                     <td className="px-6 py-4">{item.currentStock}</td>
                     <td className="px-6 py-4">{item.minimumStock}</td>
                     <td className="px-6 py-4">R{Number(item.costPerUnit).toFixed(2)}</td>
-                    <td className="px-6 py-4">{format(new Date(item.updatedAt), ' d MMM yyyy')}</td>
+                    <td className="px-6 py-4">{format(new Date(item.updatedAt), 'd MMM yyyy')}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium
                         ${item.currentStock <= item.minimumStock ?
@@ -452,10 +500,19 @@ export default function InventoryTable() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
                 >
-                  <Save className="w-5 h-5 mr-2" />
-                  {isLoading ? 'Saving...' : 'Save Entry'}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5 mr-2" />
+                      Save Entry
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -503,12 +560,28 @@ export default function InventoryTable() {
 
               <div className="flex justify-end gap-2 mt-6">
                 <button
+                  type="button"
+                  onClick={() => setShowCategoryModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
                   type="submit"
                   disabled={isLoading}
                   className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400"
                 >
-                  <Save className="w-5 h-5 mr-2" />
-                  {isLoading ? 'Saving...' : 'Save Category'}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5 mr-2" />
+                      Save Category
+                    </>
+                  )}
                 </button>
               </div>
             </form>

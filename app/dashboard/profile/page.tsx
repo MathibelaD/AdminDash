@@ -15,8 +15,12 @@ import {
   Store,
   TrendingUp
 } from 'lucide-react';
+import Image from 'next/image';
+import { useSession } from 'next-auth/react';
 
 export default function Profile() {
+    const { data: session } = useSession();
+    
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Profile Header Section */}
@@ -35,19 +39,21 @@ export default function Profile() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-32">
           <div className="flex items-center space-x-6">
             <div className="relative">
-              <img
-                src="/restaurant-manager-avatar.jpg"
-                alt="Sarah Johnson"
-                className="w-32 h-32 rounded-full border-4 border-white shadow-xl object-cover"
+            <Image
+                src={session?.user?.image || "/profile-picture-circle.png" }
+                alt={session?.user?.name || "Profile"}
+                 className="w-32 h-32 rounded-full border-4 border-white shadow-xl object-cover"
+                width={32}
+                height={32}
               />
               <span className="absolute bottom-2 right-2 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
             </div>
             <div className="text-white">
-              <h1 className="text-3xl font-bold">Sarah Johnson</h1>
-              <p className="text-blue-100 text-lg">Regional Operations Manager</p>
+              <h1 className="text-3xl font-bold">{session?.user?.name }</h1>
+              <p className="text-blue-100 text-lg">Resturant Admin Manager</p>
               <div className="flex items-center mt-2 text-blue-100">
                 <MapPin className="w-4 h-4 mr-1" />
-                <span>Boston, Massachusetts</span>
+                <span>Pretoria, South Africa</span>
               </div>
             </div>
           </div>
@@ -235,7 +241,7 @@ export default function Profile() {
             </div>
 
             {/* Additional Stats or Charts could go here */}
-          </div>
+          </div> 
         </div>
       </div>
     </div>
