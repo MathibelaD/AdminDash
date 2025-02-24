@@ -41,7 +41,6 @@ export default function HeaderComponent() {
     },
   ]);
   const { data: session } = useSession();
-
   return (
     <header className="sticky top-0 z-30 w-full bg-white border-b border-gray-200 shadow-sm">
       <div className="px-4 sm:px-6 lg:px-8">
@@ -108,7 +107,7 @@ export default function HeaderComponent() {
                 className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 <Image
-                  src={session?.user?.image || "https://www.istockphoto.com/photos/blank-profile-picture"}
+                  src={session?.user?.image ||  "/profile-picture-circle.png"}
                   alt={session?.user?.name || "Profile"}
                   className="w-8 h-8 rounded-full object-cover border border-gray-200"
                   width={40}
