@@ -16,10 +16,9 @@ import {
   TrendingUp
 } from 'lucide-react';
 import Image from 'next/image';
-import { useSession } from 'next-auth/react';
 
 export default function Profile() {
-    const { data: session } = useSession();
+    //const { data: session } = useSession();
     
   return (
     <div className="min-h-screen bg-gray-50">
@@ -40,8 +39,8 @@ export default function Profile() {
           <div className="flex items-center space-x-6">
             <div className="relative">
             <Image
-                src={session?.user?.image || "/profile-picture-circle.png" }
-                alt={session?.user?.name || "Profile"}
+                src="/profile-picture-circle.png" 
+                alt="Profile"
                  className="w-32 h-32 rounded-full border-4 border-white shadow-xl object-cover"
                 width={32}
                 height={32}
@@ -49,7 +48,7 @@ export default function Profile() {
               <span className="absolute bottom-2 right-2 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
             </div>
             <div className="text-white">
-              <h1 className="text-3xl font-bold">{session?.user?.name  || "User"}</h1>
+              <h1 className="text-3xl font-bold">User</h1>
               <p className="text-blue-100 text-lg">Resturant Admin Manager</p>
               <div className="flex items-center mt-2 text-blue-100">
                 <MapPin className="w-4 h-4 mr-1" />
