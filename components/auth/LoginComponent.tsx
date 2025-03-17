@@ -1,7 +1,6 @@
 'use client'
 import { useState } from "react";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function LoginComponent() {
@@ -18,17 +17,17 @@ export default function LoginComponent() {
         setError("");
 
         try {
-            const result = await signIn("credentials", {
-                email,
-                password,
-                redirect: false,
-            });
-
-            if (result?.error) { 
-                setError("Invalid email or password");
-                setIsLoading(false);
-                return;
-            }
+            // const result = await signIn("credentials", {
+            //     email,
+            //     password,
+            //     redirect: false,
+            // });
+            console.log("Sending Credentials")
+            // if (result?.error) { 
+            //     setError("Invalid email or password");
+            //     setIsLoading(false);
+            //     return;
+            // }
 
             console.log("To Dashboard")
             router.push("/dashboard");
@@ -40,27 +39,28 @@ export default function LoginComponent() {
     };
 
     const handleGoogleSignIn = async () => {
-    try {
-        setIsLoading(true);
-        const result = await signIn("google", {
-            callbackUrl: "/dashboard",
-            redirect: false  // This gives us more control over the redirect
-        });
+    // try {
+    //     setIsLoading(true);
+    //     const result = await signIn("google", {
+    //         callbackUrl: "/dashboard",
+    //         redirect: false  // This gives us more control over the redirect
+    //     });
 
-        if (result?.error) {
-            setError(result.error);
-            return;
-        }
+    //     if (result?.error) {
+    //         setError(result.error);
+    //         return;
+    //     }
 
-        // If successful, manually redirect
-        if (result?.url) {
-            router.push(result.url);
-        }
-    } catch (error) {
-        setError("An error occurred during Google sign in");
-    } finally {
-        setIsLoading(false);  // Make sure to reset loading state
-    }
+    //     // If successful, manually redirect
+    //     if (result?.url) {
+    //         router.push(result.url);
+    //     }
+    // } catch (error) {
+    //     setError("An error occurred during Google sign in");
+    // } finally {
+    //     setIsLoading(false);  // Make sure to reset loading state
+    // }
+    console.log("Logging")
 };
 
     return (

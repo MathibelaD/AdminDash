@@ -12,7 +12,6 @@ import {
   HelpCircle
 } from 'lucide-react';
 import Image from 'next/image';
-import { signOut, useSession } from "next-auth/react";
 
 export default function HeaderComponent() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -40,7 +39,7 @@ export default function HeaderComponent() {
       unread: false,
     },
   ]);
-  const { data: session } = useSession();
+  // const { data: session } = useSession();
   return (
     <header className="sticky top-0 z-30 w-full bg-white border-b border-gray-200 shadow-sm">
       <div className="px-4 sm:px-6 lg:px-8">
@@ -107,14 +106,14 @@ export default function HeaderComponent() {
                 className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 <Image
-                  src={session?.user?.image ||  "/profile-picture-circle.png"}
-                  alt={session?.user?.name || "Profile"}
+                  src="/profile-picture-circle.png"
+                  alt="Profile"
                   className="w-8 h-8 rounded-full object-cover border border-gray-200"
                   width={40}
                   height={40}
                 />
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium text-gray-900"> {session?.user?.name || "User"}</p>
+                  <p className="text-sm font-medium text-gray-900">User</p>
                   <p className="text-xs text-gray-500">Restaurant Admin</p>
                 </div>
 
@@ -150,7 +149,7 @@ export default function HeaderComponent() {
                   </Link>
                   <div className="border-t border-gray-200 my-1" />
                   <button
-                    onClick={() => signOut({ callbackUrl: '/' })}
+                    onClick={() => console.log("SignOut")}
                     className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
                   >
                     <LogOut className="w-4 h-4 mr-3" />
