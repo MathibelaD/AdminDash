@@ -1,7 +1,6 @@
 // app/api/inventory/route.ts
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
-import Prisma from '@prisma/client';
 
 export async function POST(request: Request) {
   try {
@@ -47,8 +46,7 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
-
+} 
 // Get all inventory items
 export async function GET(request: Request) {
   try {

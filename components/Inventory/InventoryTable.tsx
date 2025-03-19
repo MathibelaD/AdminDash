@@ -1,9 +1,12 @@
 'use client'
 import React, { useEffect, useState } from 'react';
-import { AlertCircle, Save, X, Search, Plus, Loader2 } from 'lucide-react';
+import { AlertCircle, Save, X, Search, Plus, Loader2, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns'
 
+
 interface InventoryItem {
+  supplier: string;
+  invoiceNumber: string;
   id: string;
   name: string;
   category: {
@@ -16,21 +19,17 @@ interface InventoryItem {
   unit: string;
   updatedAt: string;
 }
-
-// Add missing interfaces
 interface NewCategory {
   name: string;
   description: string;
 }
-
 interface StockCategory {
   id: string;
   name: string;
   description?: string;
 }
-
 interface StockItem {
-  id: number;
+  id: string;
   name: string;
   quantity: number;
   costPerUnit: number;
@@ -52,7 +51,7 @@ export default function InventoryTable() {
   const [categories, setCategories] = useState<StockCategory[]>([]);
   const [recentEntries, setRecentEntries] = useState<StockItem[]>([]);
   const [newItem, setNewItem] = useState<StockItem>({
-    id: 0,
+    id: '',
     name: '',
     quantity: 0,
     costPerUnit: 0,
@@ -65,8 +64,8 @@ export default function InventoryTable() {
   });
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [isLoadingInventory, setIsLoadingInventory] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
 
-  // Only fetch data on initial load, no automatic interval
   useEffect(() => {
     // Initial fetch
     fetchCategories();
@@ -97,7 +96,6 @@ export default function InventoryTable() {
       setIsLoadingInventory(false);
     }
   };
-
   // Update your filtering logic to work with the new data structure
   const filteredItems = inventoryItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -113,7 +111,7 @@ export default function InventoryTable() {
 
   // Track if a new stock item has been added
   const [stockAdded, setStockAdded] = useState(false);
-  
+
   // Use effect to refresh inventory when stockAdded is true
   useEffect(() => {
     if (stockAdded) {
@@ -121,14 +119,25 @@ export default function InventoryTable() {
       setStockAdded(false);
     }
   }, [stockAdded]);
-  
+
+
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+   
 
     try {
-      const response = await fetch('/api/inventory', {
-        method: 'POST',
+
+      const url = isEditing
+        ? `/api/inventory/${newItem.id}` // Update an existing item
+        : '/api/inventory'; // Create a new item
+      const method = isEditing ? 'PUT' : 'POST';
+
+      
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -155,13 +164,13 @@ export default function InventoryTable() {
 
       // Update your local state
       setRecentEntries([savedItem, ...recentEntries]);
-      
+
       // Set the stockAdded flag to trigger inventory refresh
       setStockAdded(true);
 
       // Reset form and close modal
       setNewItem({
-        id: 0,
+        id: '',
         name: '',
         quantity: 0,
         costPerUnit: 0,
@@ -174,7 +183,7 @@ export default function InventoryTable() {
       });
 
       setShowModal(false);
-      console.log("Stock item added successfully");
+      setIsEditing(false);
       //toast.success('Stock item added successfully');
     } catch (error) {
       console.error('Error saving inventory item:', error);
@@ -206,10 +215,8 @@ export default function InventoryTable() {
       setCategories([...categories, savedCategory]);
       setNewCategory({ name: '', description: '' });
       setShowCategoryModal(false);
-      
-      // Also refresh inventory data in case it's affected by category changes
       await fetchInventory();
-      
+
       console.log("Category added successfully");
     } catch (error) {
       console.error('Error saving category:', error);
@@ -221,6 +228,54 @@ export default function InventoryTable() {
   const categoryOptions = categories.map(cat => ({
     value: cat.id, label: cat.name
   }));
+
+
+
+  const onEdit = (item: InventoryItem) => {
+    
+    setNewItem({
+      id: item.id,
+      name: item.name,
+      quantity: item.currentStock,
+      costPerUnit: item.costPerUnit,
+      minimumStock: item.minimumStock,
+      category: item.category.id,
+      supplier: item.supplier,
+      invoiceNumber: item.invoiceNumber,
+      unit: item.unit,
+      date: item.updatedAt.split('T')[0],
+    });
+    setIsEditing(true);
+    setShowModal(true);
+  };
+
+  const onDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/inventory/${id}`, {
+        method: 'DELETE',
+      });
+  
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete inventory item');
+      }
+  
+      // Remove the item from the local state (UI)
+      setInventoryItems((prevItems) =>
+        prevItems.filter((item) => item.id !== id)
+      );
+  
+      console.log('Item deleted successfully');
+      // Optionally show a success message, like using toast or alert
+      // toast.success('Item deleted successfully');
+    } catch (error) {
+      console.error('Error deleting inventory item:', error);
+      // Optionally show an error message
+      // toast.error(error.message || 'Failed to delete item');
+    }
+  };
+  
+
 
   return (
     <div className="space-y-6">
@@ -308,6 +363,8 @@ export default function InventoryTable() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cost Per Unit</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Updated</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -320,17 +377,38 @@ export default function InventoryTable() {
                     <td className="px-6 py-4">R{Number(item.costPerUnit).toFixed(2)}</td>
                     <td className="px-6 py-4">{format(new Date(item.updatedAt), 'd MMM yyyy')}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium
-                        ${item.currentStock <= item.minimumStock ?
-                          'bg-red-100 text-red-800' :
-                          'bg-green-100 text-green-800'}`}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${item.currentStock <= item.minimumStock
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-green-100 text-green-800'
+                          }`}
+                        style={{ display: 'inline-block', whiteSpace: 'nowrap' }} // Ensure it's in one line
+                      >
                         {item.currentStock <= item.minimumStock ? 'Low Stock' : 'In Stock'}
                       </span>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => onEdit(item)}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => onDelete(item.id)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+
           )}
           {!isLoadingInventory && filteredItems.length === 0 && (
             <div className="text-center py-8 text-gray-500">
@@ -346,12 +424,11 @@ export default function InventoryTable() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Add New Stock</h3>
+              <h3 className="text-lg font-medium">{isEditing ? 'Edit Stock Item' : 'Add New Stock'}</h3>
               <button onClick={() => setShowModal(false)}>
                 <X className="w-6 h-6 text-gray-500" />
               </button>
             </div>
-
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -429,6 +506,7 @@ export default function InventoryTable() {
                     type="number"
                     required
                     min="0"
+
                     className="w-full p-2 border rounded-lg"
                     value={newItem.minimumStock || ''}
                     onChange={(e) => setNewItem({ ...newItem, minimumStock: Number(e.target.value) })}
@@ -492,7 +570,10 @@ export default function InventoryTable() {
               <div className="flex justify-end gap-2 mt-6">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    setIsEditing(false);
+                  }}
                   className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
                 >
                   Cancel
@@ -510,7 +591,7 @@ export default function InventoryTable() {
                   ) : (
                     <>
                       <Save className="w-5 h-5 mr-2" />
-                      Save Entry
+                      {isEditing ? 'Update Item' : 'Save Item'}
                     </>
                   )}
                 </button>
