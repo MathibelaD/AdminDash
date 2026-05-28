@@ -13,7 +13,6 @@ export default function LoginComponent() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        router.push("/dashboard");
         setIsLoading(true);
         setError("");
 
@@ -30,7 +29,6 @@ export default function LoginComponent() {
                 return;
             }
 
-            console.log("To Dashboard")
             router.push("/dashboard");
             router.refresh();
         } catch (error) {

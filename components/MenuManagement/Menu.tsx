@@ -1,69 +1,74 @@
 'use client'
-import React, { useState } from 'react';
-import { PlusCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { PlusCircle, Loader2 } from 'lucide-react';
 import AddMenuItem from './AddMenuItem';
 import { SearchFilters } from './SearchFilters';
 import MenuTable from './MenuTable';
 
-
 export default function MenuManagement() {
-  // State
-  const [menuItems, setMenuItems] = useState([
-    {
-      id: 1,
-      name: 'Classic Kota',
-      category: 'Kota',
-      price: 45.99,
-      ingredients: [1, 4, 8, 12, 16],
-      status: 'Available',
-      type: 'item'
-    },
-    {
-      id: 2,
-      name: 'Cheese Burger Meal',
-      category: 'Meals',
-      price: 75.99,
-      ingredients: [2, 6, 11, 13, 14, 16],
-      drinks: [101],
-      sides: [4],
-      status: 'Available',
-      type: 'meal'
-    },
-  ]);
-
+  const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  // Handlers
+  useEffect(() => { fetchMenuItems(); }, []);
+
+  const fetchMenuItems = async () => {
+    try {
+      const res = await fetch('/api/menu');
+      const data = await res.json();
+      if (!data.error) {
+        const mapped = data.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          category: item.category?.name || 'Uncategorized',
+          price: Number(item.price),
+          ingredients: [],
+          status: item.isAvailable ? 'Available' : 'Out of Stock',
+          type: 'item',
+        }));
+        setMenuItems(mapped);
+      }
+    } catch (error) {
+      console.error('Error fetching menu:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAddItem = (newItem: any) => {
     setMenuItems([...menuItems, newItem]);
   };
 
   const handleEditItem = (item: any) => {
-    // Add edit functionality
     console.log('Edit item:', item);
   };
 
-  const handleDeleteItem = (id: number) => {
-    setMenuItems(menuItems.filter(item => item.id !== id));
+  const handleDeleteItem = async (id: number | string) => {
+    try {
+      const res = await fetch(`/api/menu?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setMenuItems(menuItems.filter(item => item.id !== id));
+      }
+    } catch (error) {
+      console.error('Error deleting item:', error);
+    }
   };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>;
+  }
 
   return (
     <div className="p-6">
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Menu Management</h1>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          <PlusCircle className="w-5 h-5 mr-2" />
-          Add Item
+        <button onClick={() => setShowAddModal(true)} className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          <PlusCircle className="w-5 h-5 mr-2" />Add Item
         </button>
       </div>
 
-      {/* Search and Filters */}
       <SearchFilters
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -71,7 +76,6 @@ export default function MenuManagement() {
         setSelectedCategory={setSelectedCategory}
       />
 
-      {/* Menu Table */}
       <MenuTable
         items={menuItems}
         onEdit={handleEditItem}
@@ -80,7 +84,6 @@ export default function MenuManagement() {
         selectedCategory={selectedCategory}
       />
 
-      {/* Add Modal */}
       <AddMenuItem
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}

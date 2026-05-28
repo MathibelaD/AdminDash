@@ -7,11 +7,42 @@ import WasteLogTable from './WasteLogTable';
 
 export const WasteTrackingPage = () => {
   const [showWasteEntry, setShowWasteEntry] = useState(false);
-  const [activeTab, setActiveTab] = useState('log'); // 'log' or 'analytics'
+  const [activeTab, setActiveTab] = useState('log');
+
+  const handleWasteSubmit = async (data: any) => {
+    try {
+      const reasonMap: Record<string, string> = {
+        'Expired': 'EXPIRED',
+        'Quality Issues': 'SPOILED',
+        'Overproduction': 'OVERCOOKED',
+        'Preparation Error': 'DROPPED',
+        'Customer Returns': 'CUSTOMER_RETURN',
+        'Other': 'OTHER',
+        'Spoilage': 'SPOILED',
+      };
+
+      await fetch('/api/waste', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          itemName: data.itemName,
+          category: data.category,
+          quantity: Number(data.quantity),
+          unit: data.unit,
+          reason: reasonMap[data.reason] || 'OTHER',
+          cost: Number(data.cost),
+          notes: data.actionTaken || null,
+          date: data.date,
+        }),
+      });
+      setShowWasteEntry(false);
+    } catch (error) {
+      console.error('Error saving waste entry:', error);
+    }
+  };
 
   return (
     <div className="p-6">
-      {/* Header */}
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
@@ -27,7 +58,6 @@ export const WasteTrackingPage = () => {
           </button>
         </div>
 
-        {/* Tab Navigation */}
         <div className="flex space-x-4 border-b">
           <button
             className={`px-4 py-2 ${activeTab === 'log' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
@@ -44,23 +74,14 @@ export const WasteTrackingPage = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="space-y-6">
-        {activeTab === 'log' ? (
-          <WasteLogTable />
-        ) : (
-          <WasteAnalytics />
-        )}
+        {activeTab === 'log' ? <WasteLogTable /> : <WasteAnalytics />}
       </div>
 
-      {/* Waste Entry Modal */}
-      <WasteEntryForm 
+      <WasteEntryForm
         isOpen={showWasteEntry}
         onClose={() => setShowWasteEntry(false)}
-        onSubmit={(data) => {
-          console.log('Waste entry submitted:', data);
-          setShowWasteEntry(false);
-        }}
+        onSubmit={handleWasteSubmit}
       />
     </div>
   );
