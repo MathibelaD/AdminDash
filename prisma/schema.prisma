@@ -9,13 +9,16 @@ generator client {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  password     String
-  firstName    String
-  lastName     String
-  profileImage String?
-  role         UserRole @default(CUSTOMER) // Changed default to CUSTOMER
+  id            String    @id @default(uuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?  
+  firstName     String    @default("")
+  lastName      String    @default("")
+  profileImage  String?
+  role          UserRole  @default(CUSTOMER) // Changed default to CUSTOMER
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
