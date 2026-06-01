@@ -1,26 +1,17 @@
 'use client'
 import React, { useEffect, useState } from 'react';
 import { AlertCircle, Save, X, Search, Plus, Loader2 } from 'lucide-react';
-import { format } from 'date-fns'
+import { format } from 'date-fns';
 
 interface InventoryItem {
   id: string;
   name: string;
-  category: {
-    id: string;
-    name: string;
-  };
+  category: { id: string; name: string };
   currentStock: number;
   minimumStock: number;
   costPerUnit: number;
   unit: string;
   updatedAt: string;
-}
-
-// Add missing interfaces
-interface NewCategory {
-  name: string;
-  description: string;
 }
 
 interface StockCategory {
@@ -29,76 +20,43 @@ interface StockCategory {
   description?: string;
 }
 
-interface StockItem {
-  id: number;
-  name: string;
-  quantity: number;
-  costPerUnit: number;
-  minimumStock: number;
-  category: string;
-  supplier: string;
-  invoiceNumber: string;
-  unit: string;
-  date: string;
-}
-
 export default function InventoryTable() {
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [filterCategory, setFilterCategory] = React.useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategory, setFilterCategory] = useState('all');
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [newCategory, setNewCategory] = useState<NewCategory>({ name: '', description: '' });
+  const [newCategory, setNewCategory] = useState({ name: '', description: '' });
   const [categories, setCategories] = useState<StockCategory[]>([]);
-  const [recentEntries, setRecentEntries] = useState<StockItem[]>([]);
-  const [newItem, setNewItem] = useState<StockItem>({
-    id: 0,
-    name: '',
-    quantity: 0,
-    costPerUnit: 0,
-    minimumStock: 0,
-    category: '',
-    supplier: '',
-    invoiceNumber: '',
-    unit: '',
-    date: new Date().toISOString().split('T')[0]
-  });
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [isLoadingInventory, setIsLoadingInventory] = useState(true);
+  const [newItem, setNewItem] = useState({
+    name: '', quantity: 0, costPerUnit: 0, minimumStock: 0,
+    category: '', supplier: '', invoiceNumber: '', unit: '',
+    date: new Date().toISOString().split('T')[0],
+  });
 
-  // Only fetch data on initial load, no automatic interval
   useEffect(() => {
-    // Initial fetch
     fetchCategories();
     fetchInventory();
   }, []);
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/stockCategories');
-      if (!response.ok) throw new Error('Failed to fetch categories');
-      const data = await response.json();
-      setCategories(data);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
+      const res = await fetch('/api/stockCategories');
+      if (res.ok) setCategories(await res.json());
+    } catch (e) { console.error(e); }
   };
 
   const fetchInventory = async () => {
     setIsLoadingInventory(true);
     try {
-      const response = await fetch('/api/inventory');
-      if (!response.ok) throw new Error('Failed to fetch inventory');
-      const data = await response.json();
-      setInventoryItems(data);
-    } catch (error) {
-      console.error('Error fetching inventory:', error);
-    } finally {
-      setIsLoadingInventory(false);
-    }
+      const res = await fetch('/api/inventory');
+      if (res.ok) setInventoryItems(await res.json());
+    } catch (e) { console.error(e); }
+    finally { setIsLoadingInventory(false); }
   };
 
-  // Update your filtering logic to work with the new data structure
   const filteredItems = inventoryItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = filterCategory === 'all' || item.category.name === filterCategory;
@@ -106,224 +64,137 @@ export default function InventoryTable() {
   });
 
   const uniqueCategories = ['all', ...new Set(inventoryItems.map(item => item.category.name))];
-
-  // Calculate low stock items
   const lowStockItems = inventoryItems.filter(item => item.currentStock <= item.minimumStock);
 
-
-  // Track if a new stock item has been added
-  const [stockAdded, setStockAdded] = useState(false);
-  
-  // Use effect to refresh inventory when stockAdded is true
-  useEffect(() => {
-    if (stockAdded) {
-      fetchInventory();
-      setStockAdded(false);
-    }
-  }, [stockAdded]);
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
-      const response = await fetch('/api/inventory', {
+      const res = await fetch('/api/inventory', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: newItem.name,
-          categoryId: newItem.category, // This should be the category ID
-          currentStock: newItem.quantity,
-          costPerUnit: newItem.costPerUnit,
-          minimumStock: newItem.minimumStock, // Add this line
-          unit: newItem.unit, // Use the selected unit
-          supplierId: null, // If you have supplier IDs, add them here
-          description: '', // Add description field to your form if needed
-          supplier: newItem.supplier, // Add supplier info
-          invoiceNumber: newItem.invoiceNumber, // Add invoice info
+          name: newItem.name, categoryId: newItem.category,
+          currentStock: newItem.quantity, costPerUnit: newItem.costPerUnit,
+          minimumStock: newItem.minimumStock, unit: newItem.unit,
+          supplier: newItem.supplier, invoiceNumber: newItem.invoiceNumber,
         }),
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create inventory item');
-      }
-
-      const savedItem = await response.json();
-
-      // Update your local state
-      setRecentEntries([savedItem, ...recentEntries]);
-      
-      // Set the stockAdded flag to trigger inventory refresh
-      setStockAdded(true);
-
-      // Reset form and close modal
-      setNewItem({
-        id: 0,
-        name: '',
-        quantity: 0,
-        costPerUnit: 0,
-        minimumStock: 0,
-        category: '',
-        supplier: '',
-        invoiceNumber: '',
-        unit: '',
-        date: new Date().toISOString().split('T')[0]
-      });
-
+      if (!res.ok) throw new Error('Failed to create item');
       setShowModal(false);
-      console.log("Stock item added successfully");
-      //toast.success('Stock item added successfully');
-    } catch (error) {
-      console.error('Error saving inventory item:', error);
-      //toast.error(error instanceof Error ? error.message : 'Failed to save stock item');
-    } finally {
-      setIsLoading(false); // Make sure isLoading is always reset
-    }
+      setNewItem({ name: '', quantity: 0, costPerUnit: 0, minimumStock: 0, category: '', supplier: '', invoiceNumber: '', unit: '', date: new Date().toISOString().split('T')[0] });
+      fetchInventory();
+    } catch (e) { console.error(e); }
+    finally { setIsLoading(false); }
   };
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
-      const response = await fetch('/api/stockCategories', {
+      const res = await fetch('/api/stockCategories', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newCategory),
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create category');
-      }
-
-      const savedCategory = await response.json();
-      setCategories([...categories, savedCategory]);
+      if (!res.ok) throw new Error('Failed to create category');
+      const saved = await res.json();
+      setCategories([...categories, saved]);
       setNewCategory({ name: '', description: '' });
       setShowCategoryModal(false);
-      
-      // Also refresh inventory data in case it's affected by category changes
-      await fetchInventory();
-      
-      console.log("Category added successfully");
-    } catch (error) {
-      console.error('Error saving category:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setIsLoading(false); }
   };
-
-  const categoryOptions = categories.map(cat => ({
-    value: cat.id, label: cat.name
-  }));
 
   return (
     <div className="space-y-6">
-      {/* Stock Entry buttons */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">Inventory Entry</h2>
-        <div className="flex gap-3">
-          <button
-            onClick={() => setShowCategoryModal(true)}
-            className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Add New Category
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
+          <p className="text-sm text-gray-500 mt-1">{inventoryItems.length} items tracked</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => setShowCategoryModal(true)} className="btn-secondary">
+            <Plus className="w-4 h-4 mr-1.5" /> Category
           </button>
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Add New Stock
+          <button onClick={() => setShowModal(true)} className="btn-primary">
+            <Plus className="w-4 h-4 mr-1.5" /> Add Stock
           </button>
         </div>
       </div>
 
       {/* Low Stock Alert */}
       {lowStockItems.length > 0 && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
-          <div className="flex items-center">
-            <AlertCircle className="w-5 h-5 text-yellow-400 mr-2" />
-            <h3 className="font-medium">Low Stock Alert</h3>
-          </div>
-          <div className="mt-2">
-            {lowStockItems.map(item => (
-              <p key={item.id} className="text-sm text-yellow-700">
-                {item.name} - Only {item.currentStock} {item.unit} remaining (Minimum: {item.minimumStock})
-              </p>
-            ))}
+        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Low Stock ({lowStockItems.length} items)</p>
+            <div className="mt-1 space-y-0.5">
+              {lowStockItems.slice(0, 4).map(item => (
+                <p key={item.id} className="text-sm text-amber-700">
+                  {item.name} — {item.currentStock} {item.unit} (min: {item.minimumStock})
+                </p>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Search && Filters */}
-      <div className="flex gap-4">
+      {/* Filters */}
+      <div className="flex gap-3">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
             placeholder="Search inventory..."
-            className="w-full pl-10 pr-4 py-2 border rounded-lg"
+            className="input-field pl-9"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         <select
-          className="px-4 py-2 border rounded-lg min-w-[150px]"
+          className="input-field w-auto min-w-[140px]"
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
         >
-          {uniqueCategories.map(category => (
-            <option key={category} value={category}>
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </option>
+          {uniqueCategories.map(cat => (
+            <option key={cat} value={cat}>{cat === 'all' ? 'All Categories' : cat}</option>
           ))}
         </select>
       </div>
 
-      {/* Inventory Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="p-6 border-b">
-          <h3 className="text-lg font-medium">Current Inventory</h3>
-        </div>
+      {/* Table */}
+      <div className="table-container">
         <div className="overflow-x-auto">
           {isLoadingInventory ? (
-            <div className="flex justify-center items-center p-8">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
             </div>
           ) : (
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">In Stock</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Min Required</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cost Per Unit</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Updated</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className="table-header">Item</th>
+                  <th className="table-header">Category</th>
+                  <th className="table-header">Stock</th>
+                  <th className="table-header">Min Required</th>
+                  <th className="table-header">Cost/Unit</th>
+                  <th className="table-header">Updated</th>
+                  <th className="table-header">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-50">
                 {filteredItems.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">{item.name}</td>
-                    <td className="px-6 py-4">{item.category?.name}</td>
-                    <td className="px-6 py-4">{item.currentStock}</td>
-                    <td className="px-6 py-4">{item.minimumStock}</td>
-                    <td className="px-6 py-4">R{Number(item.costPerUnit).toFixed(2)}</td>
-                    <td className="px-6 py-4">{format(new Date(item.updatedAt), 'd MMM yyyy')}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium
-                        ${item.currentStock <= item.minimumStock ?
-                          'bg-red-100 text-red-800' :
-                          'bg-green-100 text-green-800'}`}>
+                  <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="table-cell font-medium text-gray-900">{item.name}</td>
+                    <td className="table-cell">{item.category?.name}</td>
+                    <td className="table-cell">{item.currentStock} {item.unit}</td>
+                    <td className="table-cell">{item.minimumStock} {item.unit}</td>
+                    <td className="table-cell">R{Number(item.costPerUnit).toFixed(2)}</td>
+                    <td className="table-cell text-gray-500">{format(new Date(item.updatedAt), 'd MMM yyyy')}</td>
+                    <td className="table-cell">
+                      <span className={item.currentStock <= item.minimumStock ? 'badge badge-danger' : 'badge badge-success'}>
                         {item.currentStock <= item.minimumStock ? 'Low Stock' : 'In Stock'}
                       </span>
                     </td>
@@ -333,69 +204,37 @@ export default function InventoryTable() {
             </table>
           )}
           {!isLoadingInventory && filteredItems.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No inventory items found
-            </div>
+            <div className="py-12 text-center text-gray-400 text-sm">No inventory items found</div>
           )}
         </div>
       </div>
 
-
       {/* Add Stock Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Add New Stock</h3>
-              <button onClick={() => setShowModal(false)}>
-                <X className="w-6 h-6 text-gray-500" />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-lg font-bold text-gray-900">Add New Stock</h3>
+              <button onClick={() => setShowModal(false)} className="p-1 rounded-lg hover:bg-gray-100">
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
-
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Item Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full p-2 border rounded-lg"
-                    value={newItem.name}
-                    onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
+                  <input type="text" required className="input-field" value={newItem.name} onChange={(e) => setNewItem({ ...newItem, name: e.target.value })} />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category
-                  </label>
-                  <select
-                    required
-                    className="w-full p-2 border rounded-lg"
-                    value={newItem.category}
-                    onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                  >
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <select required className="input-field" value={newItem.category} onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}>
                     <option value="">Select Category</option>
-                    {categoryOptions.map((category) => (
-                      <option key={category.value} value={category.value}>
-                        {category.label}
-                      </option>
-                    ))}
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Unit
-                  </label>
-                  <select
-                    required
-                    className="w-full p-2 border rounded-lg"
-                    value={newItem.unit}
-                    onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
-                  >
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                  <select required className="input-field" value={newItem.unit} onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}>
                     <option value="">Select Unit</option>
                     <option value="pieces">Pieces</option>
                     <option value="kg">Kilograms</option>
@@ -405,114 +244,31 @@ export default function InventoryTable() {
                     <option value="heads">Heads</option>
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Quantity
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    className="w-full p-2 border rounded-lg"
-                    value={newItem.quantity || ''}
-                    onChange={(e) => setNewItem({ ...newItem, quantity: Number(e.target.value) })}
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                  <input type="number" required min="1" className="input-field" value={newItem.quantity || ''} onChange={(e) => setNewItem({ ...newItem, quantity: Number(e.target.value) })} />
                 </div>
-
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Minimum Stock
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min="0"
-                    className="w-full p-2 border rounded-lg"
-                    value={newItem.minimumStock || ''}
-                    onChange={(e) => setNewItem({ ...newItem, minimumStock: Number(e.target.value) })}
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Stock</label>
+                  <input type="number" required min="0" className="input-field" value={newItem.minimumStock || ''} onChange={(e) => setNewItem({ ...newItem, minimumStock: Number(e.target.value) })} />
                 </div>
-
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Cost per Unit (R)
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min="0.01"
-                    step="0.01"
-                    className="w-full p-2 border rounded-lg"
-                    value={newItem.costPerUnit || ''}
-                    onChange={(e) => setNewItem({ ...newItem, costPerUnit: Number(e.target.value) })}
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cost per Unit (R)</label>
+                  <input type="number" required min="0.01" step="0.01" className="input-field" value={newItem.costPerUnit || ''} onChange={(e) => setNewItem({ ...newItem, costPerUnit: Number(e.target.value) })} />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Supplier
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full p-2 border rounded-lg"
-                    value={newItem.supplier || ''}
-                    onChange={(e) => setNewItem({ ...newItem, supplier: e.target.value })}
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
+                  <input type="text" className="input-field" value={newItem.supplier} onChange={(e) => setNewItem({ ...newItem, supplier: e.target.value })} />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Invoice Number
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full p-2 border rounded-lg"
-                    value={newItem.invoiceNumber || ''}
-                    onChange={(e) => setNewItem({ ...newItem, invoiceNumber: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    className="w-full p-2 border rounded-lg"
-                    value={newItem.date}
-                    onChange={(e) => setNewItem({ ...newItem, date: e.target.value })}
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Number</label>
+                  <input type="text" className="input-field" value={newItem.invoiceNumber} onChange={(e) => setNewItem({ ...newItem, invoiceNumber: e.target.value })} />
                 </div>
               </div>
-
-              <div className="flex justify-end gap-2 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-5 h-5 mr-2" />
-                      Save Entry
-                    </>
-                  )}
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">Cancel</button>
+                <button type="submit" disabled={isLoading} className="btn-primary">
+                  {isLoading ? <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Saving...</> : <><Save className="w-4 h-4 mr-1.5" /> Save</>}
                 </button>
               </div>
             </form>
@@ -520,75 +276,35 @@ export default function InventoryTable() {
         </div>
       )}
 
-      {/* Add Stock Category Modal */}
+      {/* Add Category Modal */}
       {showCategoryModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Add New Stock Category</h3>
-              <button onClick={() => setShowCategoryModal(false)}>
-                <X className="w-6 h-6 text-gray-500" />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-lg font-bold text-gray-900">Add Category</h3>
+              <button onClick={() => setShowCategoryModal(false)} className="p-1 rounded-lg hover:bg-gray-100">
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
-
             <form onSubmit={handleCategorySubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  className="w-full p-2 border rounded-lg"
-                  value={newCategory.name}
-                  onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                  placeholder="Enter category name"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input type="text" required className="input-field" value={newCategory.name} onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })} />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
-                <textarea
-                  className="w-full p-2 border rounded-lg h-32"
-                  value={newCategory.description}
-                  onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
-                  placeholder="Enter category description (optional)"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea className="input-field h-24 resize-none" value={newCategory.description} onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })} />
               </div>
-
-              <div className="flex justify-end gap-2 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowCategoryModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-5 h-5 mr-2" />
-                      Save Category
-                    </>
-                  )}
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setShowCategoryModal(false)} className="btn-secondary">Cancel</button>
+                <button type="submit" disabled={isLoading} className="btn-primary">
+                  {isLoading ? <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Saving...</> : <><Save className="w-4 h-4 mr-1.5" /> Save</>}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
     </div>
   );
 }

@@ -3,95 +3,74 @@ import React, { useState } from 'react';
 import {
   Home,
   ChefHat,
-  Users,
-  Trash,
-  UserCog,
+  ShoppingCart,
+  Package,
+  Wrench,
+  Trash2,
+  Star,
   Settings,
-  BarChart2,
-  Menu as MenuIcon,
-  Calendar,
-  DollarSign
+  PanelLeftClose,
+  PanelLeft,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export default function Sidebar() {
+const links = [
+  { name: 'Dashboard', href: '/dashboard', icon: Home },
+  { name: 'Menu', href: '/dashboard/menus', icon: ChefHat },
+  { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
+  { name: 'Inventory', href: '/dashboard/inventory', icon: Package },
+  { name: 'Equipment', href: '/dashboard/equipment', icon: Wrench },
+  { name: 'Waste', href: '/dashboard/waste', icon: Trash2 },
+  { name: 'Reviews', href: '/dashboard/reviews', icon: Star },
+  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+];
 
-  const [isCollapsed, setIsCollapsed] = useState(false);
+export default function Sidebar() {
+  const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
 
-  const links = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Menu Management', href: '/dashboard/menus', icon: ChefHat },
-    { name: 'Orders', href: '/dashboard/orders', icon: DollarSign },
-    { name: 'Inventory', href: '/dashboard/inventory', icon: Calendar },
-    { name: 'Equipment', href: '/dashboard/equipment', icon: BarChart2 },
-    { name: 'Waste Tracking', href: '/dashboard/waste', icon: Trash },
-    { name: 'Reviews', href: '/dashboard/reviews', icon: Users }, 
-    // { name: 'Staff', href: '/dashboard/staff', icon: UserCog },
-    // { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart2 },
-    // { name: 'Announcements', href: '/dashboard/announcements', icon: Bell },
-    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
-  ];
   return (
-    <div className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white border-r border-gray-200 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-64'}`}>
-      <div className="flex flex-col h-full">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          {!isCollapsed && (
-            <div className="flex items-center space-x-2">
-              <ChefHat className="w-8 h-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-800">Kota Admin</span>
-            </div>
-          )}
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-2 rounded-lg hover:bg-gray-100"
-          >
-            <MenuIcon className="w-6 h-6 text-gray-600" />
-          </button>
+    <aside className={`fixed left-0 top-0 h-screen bg-[#1a1a2e] text-white transition-all duration-300 z-40 flex flex-col ${collapsed ? 'w-[72px]' : 'w-60'}`}>
+      {/* Brand */}
+      <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10">
+        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center flex-shrink-0">
+          <ChefHat className="w-5 h-5 text-white" />
         </div>
-
-        {/* Navigation Links */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-          {links.map((link) => {
-            const Icon = link.icon;
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.name}
-                href={link.href}
-                className={`flex items-center space-x-2 px-4 py-3 rounded-lg transition-colors duration-150 
-                  ${isActive
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600'}`}
-              >
-                <Icon className={`w-6 h-6 ${isActive ? 'text-blue-600' : 'text-gray-500'}`} />
-                {!isCollapsed && (
-                  <span className={`font-medium ${isActive ? 'text-blue-600' : 'text-gray-700'}`}>
-                    {link.name}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Footer */}
-        {!isCollapsed && (
-          <div className="p-4 border-t border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                <UserCog className="w-6 h-6 text-gray-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-700">Admin User</p>
-                <p className="text-xs text-gray-500">admin@kotarestaurant.com</p>
-              </div>
-            </div>
-          </div>
-        )}
+        {!collapsed && <span className="text-lg font-bold tracking-tight">Kota Admin</span>}
       </div>
-    </div>
+
+      {/* Nav */}
+      <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+        {links.map((link) => {
+          const Icon = link.icon;
+          const isActive = pathname === link.href;
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
+                ${isActive
+                  ? 'bg-orange-600/20 text-orange-400'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+            >
+              <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-orange-400' : ''}`} />
+              {!collapsed && <span>{link.name}</span>}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Collapse toggle */}
+      <div className="px-3 py-3 border-t border-white/10">
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 w-full transition-colors"
+        >
+          {collapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+          {!collapsed && <span>Collapse</span>}
+        </button>
+      </div>
+    </aside>
   );
 }

@@ -9,37 +9,43 @@ interface OrderFiltersProps {
   setSearchQuery: (query: string) => void;
 }
 
-export default function OrderFilters({
-  filterStatus,
-  setFilterStatus,
-  searchQuery,
-  setSearchQuery
-}: OrderFiltersProps) {
+const statuses = [
+  { value: 'all', label: 'All' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'preparing', label: 'Preparing' },
+  { value: 'ready', label: 'Ready' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
+export default function OrderFilters({ filterStatus, setFilterStatus, searchQuery, setSearchQuery }: OrderFiltersProps) {
   return (
-    <div className="mb-6 flex flex-col sm:flex-row gap-4">
+    <div className="mb-4 flex flex-col sm:flex-row gap-3">
       <div className="flex-1 relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
-          placeholder="Search by order number or customer name..."
-          className="w-full pl-10 pr-4 py-2 border rounded-lg"
+          placeholder="Search orders..."
+          className="input-field pl-9"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-      
-      <select
-        className="px-4 py-2 border rounded-lg min-w-[200px]"
-        value={filterStatus}
-        onChange={(e) => setFilterStatus(e.target.value)}
-      >
-        <option value="all">All Orders</option>
-        <option value="pending">Pending</option>
-        <option value="preparing">Preparing</option>
-        <option value="ready">Ready</option>
-        <option value="completed">Completed</option>
-        <option value="cancelled">Cancelled</option>
-      </select>
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
+        {statuses.map((s) => (
+          <button
+            key={s.value}
+            onClick={() => setFilterStatus(s.value)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              filterStatus === s.value
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

@@ -4,15 +4,11 @@ import React from 'react';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="fixed top-0 left-0 w-full z-10">
+    <div className="min-h-screen bg-[#f5f6fa]">
+      <Sidebar />
+      <div className="ml-60 flex flex-col min-h-screen">
         <HeaderComponent />
-      </div>
-
-      <div className="flex pt-16">
-        <Sidebar />
-
-        <main className="flex-1 ml-64 p-6 min-h-screen bg-gray-50">
+        <main className="flex-1 p-6">
           {children}
         </main>
       </div>

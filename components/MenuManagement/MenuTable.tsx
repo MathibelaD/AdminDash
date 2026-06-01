@@ -3,8 +3,6 @@ import React from 'react';
 import { Edit, Trash2 } from 'lucide-react';
 import { availableIngredients } from '../data/menu-data';
 
-
-
 interface MenuItem {
   id: number;
   name: string;
@@ -26,70 +24,66 @@ interface MenuTableProps {
 }
 
 export default function MenuTable({ items, onEdit, onDelete, searchQuery, selectedCategory }: MenuTableProps) {
-  const getIngredientNames = (ingredientIds: number[]) => {
-    return ingredientIds
-      .map(id => availableIngredients.find(ing => ing.id === id)?.name)
-      .filter(Boolean)
-      .join(', ');
-  };
+  const getIngredientNames = (ids: number[]) =>
+    ids.map(id => availableIngredients.find(ing => ing.id === id)?.name).filter(Boolean).join(', ');
+
+  const filtered = items.filter(item =>
+    (selectedCategory === 'All' || item.category === selectedCategory) &&
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className="overflow-x-auto bg-white rounded-lg shadow">
-      <table className="w-full text-left">
-        <thead className="bg-gray-50 border-b">
-          <tr>
-            <th className="px-6 py-4 text-sm font-medium text-gray-500">Name</th>
-            <th className="px-6 py-4 text-sm font-medium text-gray-500">Category</th>
-            <th className="px-6 py-4 text-sm font-medium text-gray-500">Type</th>
-            <th className="px-6 py-4 text-sm font-medium text-gray-500">Price (R)</th>
-            <th className="px-6 py-4 text-sm font-medium text-gray-500">Ingredients</th>
-            <th className="px-6 py-4 text-sm font-medium text-gray-500">Status</th>
-            <th className="px-6 py-4 text-sm font-medium text-gray-500">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200">
-          {items
-            .filter(item => 
-              (selectedCategory === 'All' || item.category === selectedCategory) &&
-              item.name.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-            .map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">{item.name}</td>
-                <td className="px-6 py-4">{item.category}</td>
-                <td className="px-6 py-4 capitalize">{item.type}</td>
-                <td className="px-6 py-4">R{item.price.toFixed(2)}</td>
-                <td className="px-6 py-4 max-w-xs truncate">
+    <div className="table-container">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr>
+              <th className="table-header">Name</th>
+              <th className="table-header">Category</th>
+              <th className="table-header">Type</th>
+              <th className="table-header">Price</th>
+              <th className="table-header">Ingredients</th>
+              <th className="table-header">Status</th>
+              <th className="table-header">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {filtered.map((item) => (
+              <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                <td className="table-cell font-medium text-gray-900">{item.name}</td>
+                <td className="table-cell">{item.category}</td>
+                <td className="table-cell capitalize">{item.type}</td>
+                <td className="table-cell">R{item.price.toFixed(2)}</td>
+                <td className="table-cell max-w-[200px] truncate text-gray-500">
                   {getIngredientNames(item.ingredients)}
                 </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full
-                    ${item.status === 'Available' ? 'bg-green-100 text-green-800' : 
-                      item.status === 'Out of Stock' ? 'bg-red-100 text-red-800' : 
-                      'bg-yellow-100 text-yellow-800'}`}>
+                <td className="table-cell">
+                  <span className={
+                    item.status === 'Available' ? 'badge badge-success' :
+                    item.status === 'Out of Stock' ? 'badge badge-danger' :
+                    'badge badge-warning'
+                  }>
                     {item.status}
                   </span>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => onEdit(item)}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
+                <td className="table-cell">
+                  <div className="flex gap-1">
+                    <button onClick={() => onEdit(item)} className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors">
                       <Edit className="w-4 h-4" />
                     </button>
-                    <button 
-                      onClick={() => onDelete(item.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
+                    <button onClick={() => onDelete(item.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 transition-colors">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </td>
               </tr>
             ))}
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </div>
+      {filtered.length === 0 && (
+        <div className="py-12 text-center text-gray-400 text-sm">No menu items found</div>
+      )}
     </div>
   );
 }
