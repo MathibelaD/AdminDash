@@ -1,31 +1,28 @@
 'use client'
 import React from 'react';
 import { Edit, Trash2 } from 'lucide-react';
-import { availableIngredients } from '../data/menu-data';
+import { useRouter } from 'next/navigation';
 
 interface MenuItem {
-  id: number;
+  id: string;
   name: string;
   category: string;
   price: number;
   ingredients: number[];
   status: string;
   type: string;
-  drinks?: number[];
-  sides?: number[];
 }
 
 interface MenuTableProps {
   items: MenuItem[];
   onEdit: (item: MenuItem) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
   searchQuery: string;
   selectedCategory: string;
 }
 
 export default function MenuTable({ items, onEdit, onDelete, searchQuery, selectedCategory }: MenuTableProps) {
-  const getIngredientNames = (ids: number[]) =>
-    ids.map(id => availableIngredients.find(ing => ing.id === id)?.name).filter(Boolean).join(', ');
+  const router = useRouter();
 
   const filtered = items.filter(item =>
     (selectedCategory === 'All' || item.category === selectedCategory) &&
@@ -40,23 +37,21 @@ export default function MenuTable({ items, onEdit, onDelete, searchQuery, select
             <tr>
               <th className="table-header">Name</th>
               <th className="table-header">Category</th>
-              <th className="table-header">Type</th>
               <th className="table-header">Price</th>
-              <th className="table-header">Ingredients</th>
               <th className="table-header">Status</th>
               <th className="table-header">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
-            {filtered.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+          <tbody>
+            {filtered.map((item, index) => (
+              <tr
+                key={item.id}
+                className={`cursor-pointer transition-colors hover:bg-orange-50/60 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
+                onClick={() => router.push(`/dashboard/menus/${item.id}`)}
+              >
                 <td className="table-cell font-medium text-gray-900">{item.name}</td>
                 <td className="table-cell">{item.category}</td>
-                <td className="table-cell capitalize">{item.type}</td>
                 <td className="table-cell">R{item.price.toFixed(2)}</td>
-                <td className="table-cell max-w-[200px] truncate text-gray-500">
-                  {getIngredientNames(item.ingredients)}
-                </td>
                 <td className="table-cell">
                   <span className={
                     item.status === 'Available' ? 'badge badge-success' :
@@ -67,7 +62,7 @@ export default function MenuTable({ items, onEdit, onDelete, searchQuery, select
                   </span>
                 </td>
                 <td className="table-cell">
-                  <div className="flex gap-1">
+                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                     <button onClick={() => onEdit(item)} className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors">
                       <Edit className="w-4 h-4" />
                     </button>
