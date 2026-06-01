@@ -37,8 +37,9 @@ export default function MenuManagement() {
     }
   };
 
-  const handleAddItem = (newItem: any) => {
-    setMenuItems([...menuItems, newItem]);
+  const handleAddItem = () => {
+    // Refresh the list from DB after adding
+    fetchMenuItems();
   };
 
   const handleEditItem = (item: any) => {
