@@ -92,20 +92,24 @@ export default function FinancialAnalytics() {
         <div className="bg-white rounded-xl border border-gray-100 p-5">
           <h3 className="text-sm font-semibold text-gray-900 mb-4">Revenue Trend</h3>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data.dailyRevenue}>
-                <defs>
-                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#e85d04" stopOpacity={0.1} />
-                    <stop offset="95%" stopColor="#e85d04" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} tickFormatter={(v) => `R${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`} />
-                <Tooltip formatter={(value: number) => [`R${value.toLocaleString()}`, 'Revenue']} />
-                <Area type="monotone" dataKey="revenue" stroke="#e85d04" strokeWidth={2} fill="url(#colorRev)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            {data.dailyRevenue.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data.dailyRevenue}>
+                  <defs>
+                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#e85d04" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="#e85d04" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} tickFormatter={(v) => `R${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`} />
+                  <Tooltip formatter={(value: number) => [`R${value.toLocaleString()}`, 'Revenue']} />
+                  <Area type="monotone" dataKey="revenue" stroke="#e85d04" strokeWidth={2} fill="url(#colorRev)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-sm text-gray-400">No revenue data for this period</div>
+            )}
           </div>
         </div>
 
