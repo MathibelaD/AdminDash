@@ -1,151 +1,152 @@
 'use client'
-import React, { useState } from 'react';
-import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, PieChart, Pie, Cell 
+import React, { useEffect, useState } from 'react';
+import {
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, BarChart, Bar
 } from 'recharts';
-import { DollarSign, TrendingUp, Package, ArrowUp } from 'lucide-react';
+import { DollarSign, TrendingUp, Package, ShoppingCart, Loader2 } from 'lucide-react';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+interface AnalyticsData {
+  totalRevenue: number;
+  totalOrders: number;
+  inventoryValue: number;
+  avgOrderValue: number;
+  dailyRevenue: { date: string; revenue: number; orders: number }[];
+  topItems: { name: string; quantity: number; revenue: number }[];
+  categoryBreakdown: { category: string; value: number }[];
+}
+
+const COLORS = ['#e85d04', '#f48c06', '#ffba08', '#2563eb', '#7c3aed', '#059669'];
 
 export default function FinancialAnalytics() {
-  const [selectedPeriod, setSelectedPeriod] = useState('month');
-  
-  // Sample data - replace with real data
-  const financeData = {
-    totalSales: 328000,
-    totalExpenses: 156000,
-    netProfit: 172000,
-    inventoryValue: 45000,
-    sales: [
-      { month: 'Jan', amount: 45000 },
-      { month: 'Feb', amount: 52000 },
-      { month: 'Mar', amount: 48000 },
-      { month: 'Apr', amount: 61000 },
-      { month: 'May', amount: 55000 },
-      { month: 'Jun', amount: 67000 }
-    ],
-    expenses: [
-      { category: 'Ingredients', amount: 25000 },
-      { category: 'Staff', amount: 15000 },
-      { category: 'Utilities', amount: 5000 },
-      { category: 'Rent', amount: 8000 },
-      { category: 'Other', amount: 3000 }
-    ]
-  };
+  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState('7');
+
+  useEffect(() => {
+    fetch(`/api/dashboard/analytics?days=${period}`)
+      .then(r => r.json())
+      .then(d => { if (!d.error) setData(d); })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [period]);
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64"><Loader2 className="w-8 h-8 animate-spin text-orange-500" /></div>;
+  }
+
+  if (!data) {
+    return <div className="text-center py-12 text-gray-400">Failed to load analytics</div>;
+  }
 
   return (
     <div className="space-y-6">
-      {/* Financial Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total Sales */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <DollarSign className="w-6 h-6 text-blue-600" />
-            </div>
-            <span className="text-sm text-green-600 flex items-center">
-              <ArrowUp className="w-4 h-4 mr-1" />15%
-            </span>
-          </div>
-          <h3 className="text-gray-600 text-sm">Total Sales</h3>
-          <p className="text-2xl font-bold">R{financeData.totalSales.toLocaleString()}</p>
-        </div>
+      {/* Period selector */}
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-lg w-fit">
+        {[{ value: '7', label: '7 days' }, { value: '30', label: '30 days' }, { value: '90', label: '90 days' }].map(p => (
+          <button
+            key={p.value}
+            onClick={() => { setLoading(true); setPeriod(p.value); }}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${period === p.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
 
-        {/* Total Expenses */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <DollarSign className="w-6 h-6 text-red-600" />
-            </div>
-            <span className="text-sm text-red-600 flex items-center">
-              <ArrowUp className="w-4 h-4 mr-1" />8%
-            </span>
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="stat-card">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
+            <DollarSign className="w-5 h-5 text-white" />
           </div>
-          <h3 className="text-gray-600 text-sm">Total Expenses</h3>
-          <p className="text-2xl font-bold">R{financeData.totalExpenses.toLocaleString()}</p>
+          <p className="mt-4 text-sm text-gray-500">Revenue ({period}d)</p>
+          <p className="text-2xl font-bold text-gray-900">R{data.totalRevenue.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}</p>
         </div>
-
-        {/* Net Profit */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-green-600" />
-            </div>
-            <span className="text-sm text-green-600 flex items-center">
-              <ArrowUp className="w-4 h-4 mr-1" />12%
-            </span>
+        <div className="stat-card">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+            <ShoppingCart className="w-5 h-5 text-white" />
           </div>
-          <h3 className="text-gray-600 text-sm">Net Profit</h3>
-          <p className="text-2xl font-bold">R{financeData.netProfit.toLocaleString()}</p>
+          <p className="mt-4 text-sm text-gray-500">Orders ({period}d)</p>
+          <p className="text-2xl font-bold text-gray-900">{data.totalOrders}</p>
         </div>
-
-        {/* Inventory Value */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Package className="w-6 h-6 text-purple-600" />
-            </div>
+        <div className="stat-card">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
+            <TrendingUp className="w-5 h-5 text-white" />
           </div>
-          <h3 className="text-gray-600 text-sm">Inventory Value</h3>
-          <p className="text-2xl font-bold">R{financeData.inventoryValue.toLocaleString()}</p>
+          <p className="mt-4 text-sm text-gray-500">Avg Order Value</p>
+          <p className="text-2xl font-bold text-gray-900">R{data.avgOrderValue.toFixed(2)}</p>
+        </div>
+        <div className="stat-card">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+            <Package className="w-5 h-5 text-white" />
+          </div>
+          <p className="mt-4 text-sm text-gray-500">Inventory Value</p>
+          <p className="text-2xl font-bold text-gray-900">R{data.inventoryValue.toLocaleString('en-ZA')}</p>
         </div>
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sales Trend */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">Sales Trend</h3>
-            <select 
-              className="border rounded-lg px-3 py-1"
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-            >
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="year">This Year</option>
-            </select>
-          </div>
-          <div className="h-80">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Revenue trend */}
+        <div className="bg-white rounded-xl border border-gray-100 p-5">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4">Revenue Trend</h3>
+          <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={financeData.sales}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="amount" stroke="#2563eb" strokeWidth={2} />
-              </LineChart>
+              <AreaChart data={data.dailyRevenue}>
+                <defs>
+                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#e85d04" stopOpacity={0.1} />
+                    <stop offset="95%" stopColor="#e85d04" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} tickFormatter={(v) => `R${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`} />
+                <Tooltip formatter={(value: number) => [`R${value.toLocaleString()}`, 'Revenue']} />
+                <Area type="monotone" dataKey="revenue" stroke="#e85d04" strokeWidth={2} fill="url(#colorRev)" />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Expense Breakdown */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium mb-4">Expense Breakdown</h3>
-          <div className="h-80">
+        {/* Top selling items */}
+        <div className="bg-white rounded-xl border border-gray-100 p-5">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4">Top Selling Items</h3>
+          <div className="h-64">
+            {data.topItems.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.topItems} layout="vertical" barSize={20}>
+                  <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} />
+                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} width={120} />
+                  <Tooltip formatter={(value: number) => [value, 'Sold']} />
+                  <Bar dataKey="quantity" fill="#e85d04" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-sm text-gray-400">No sales data yet</div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Category breakdown */}
+      {data.categoryBreakdown.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 p-5">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4">Inventory by Category</h3>
+          <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie
-                  data={financeData.expenses}
-                  dataKey="amount"
-                  nameKey="category"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  label
-                >
-                  {financeData.expenses.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Pie data={data.categoryBreakdown} dataKey="value" nameKey="category" cx="50%" cy="50%" outerRadius={90} label={({ category, percent }) => `${category} (${(percent * 100).toFixed(0)}%)`}>
+                  {data.categoryBreakdown.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value: number) => [`R${value.toLocaleString()}`, 'Value']} />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

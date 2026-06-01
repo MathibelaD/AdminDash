@@ -233,15 +233,27 @@ export default function InventoryTable() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit (how you buy it)</label>
                   <select required className="input-field" value={newItem.unit} onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}>
                     <option value="">Select Unit</option>
-                    <option value="pieces">Pieces</option>
-                    <option value="kg">Kilograms</option>
-                    <option value="liters">Liters</option>
-                    <option value="slices">Slices</option>
-                    <option value="cans">Cans</option>
-                    <option value="heads">Heads</option>
+                    <optgroup label="Weight">
+                      <option value="kg">Kilograms (kg)</option>
+                      <option value="g">Grams (g)</option>
+                    </optgroup>
+                    <optgroup label="Volume">
+                      <option value="liters">Liters</option>
+                      <option value="ml">Milliliters (ml)</option>
+                    </optgroup>
+                    <optgroup label="Count">
+                      <option value="pieces">Pieces</option>
+                      <option value="loaves">Loaves</option>
+                      <option value="pockets">Pockets/Bags</option>
+                      <option value="cans">Cans</option>
+                      <option value="bottles">Bottles</option>
+                      <option value="boxes">Boxes</option>
+                      <option value="trays">Trays</option>
+                      <option value="rolls">Rolls</option>
+                    </optgroup>
                   </select>
                 </div>
                 <div>
