@@ -1,24 +1,11 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/app/lib/prisma';
+import { supabase } from '@/app/lib/supabase';
 
 export async function GET() {
-  try {
-    const customers = await prisma.user.findMany({
-      where: { role: 'CUSTOMER' },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        createdAt: true,
-        _count: { select: { customerOrders: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  // TODO: Migrate from Prisma to Supabase
+  return NextResponse.json([]);
+}
 
-    return NextResponse.json(customers);
-  } catch (error) {
-    console.error('Error fetching customers:', error);
-    return NextResponse.json({ error: 'Error fetching customers' }, { status: 500 });
-  }
+export async function POST(request: Request) {
+  return NextResponse.json({ message: 'Not yet migrated' }, { status: 501 });
 }

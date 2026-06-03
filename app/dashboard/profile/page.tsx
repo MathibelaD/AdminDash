@@ -16,10 +16,10 @@ import {
   TrendingUp
 } from 'lucide-react';
 import Image from 'next/image';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/providers/AuthProvider';
 
 export default function Profile() {
-    const { data: session } = useSession();
+    const { user } = useAuth();
     
   return (
     <div className="min-h-screen bg-gray-50">

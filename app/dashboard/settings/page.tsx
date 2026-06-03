@@ -1,10 +1,10 @@
 'use client'
 import React, { useState } from 'react';
 import { Save, Loader2 } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/providers/AuthProvider';
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState({
     restaurantName: 'Kota Restaurant',

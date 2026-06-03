@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/app/lib/prisma';
+import { supabase } from '@/app/lib/supabase';
 
 export async function GET(request: Request) {
   try {
@@ -7,23 +7,22 @@ export async function GET(request: Request) {
     const category = searchParams.get('category');
     const search = searchParams.get('search');
 
-    const where: any = {};
-    if (category && category !== 'All') where.category = { name: category };
-    if (search) where.name = { contains: search, mode: 'insensitive' };
+    let query = supabase
+      .from('menu_items')
+      .select('*, category:menu_categories(*)')
+      .order('created_at', { ascending: false });
 
-    const items = await prisma.menuItem.findMany({
-      where,
-      include: { category: true },
-      orderBy: { createdAt: 'desc' },
-    });
+    if (category && category !== 'All') {
+      query = query.eq('category.name', category);
+    }
+    if (search) {
+      query = query.ilike('name', `%${search}%`);
+    }
 
-    const serialized = items.map(item => ({
-      ...item,
-      price: item.price.toString(),
-      costPerUnit: item.costPerUnit.toString(),
-    }));
+    const { data, error } = await query;
+    if (error) throw error;
 
-    return NextResponse.json(serialized);
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching menu items:', error);
     return NextResponse.json({ error: 'Error fetching menu items' }, { status: 500 });
@@ -34,20 +33,22 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    const item = await prisma.menuItem.create({
-      data: {
+    const { data, error } = await supabase
+      .from('menu_items')
+      .insert({
         name: body.name,
         description: body.description || null,
         price: body.price,
-        categoryId: body.categoryId,
+        category_id: body.categoryId,
         image: body.image || null,
-        isAvailable: body.isAvailable ?? true,
-        costPerUnit: body.costPerUnit || 0,
-      },
-      include: { category: true },
-    });
+        is_available: body.isAvailable ?? true,
+        cost_per_unit: body.costPerUnit || 0,
+      })
+      .select('*, category:menu_categories(*)')
+      .single();
 
-    return NextResponse.json(item, { status: 201 });
+    if (error) throw error;
+    return NextResponse.json(data, { status: 201 });
   } catch (error) {
     console.error('Error creating menu item:', error);
     return NextResponse.json({ error: 'Error creating menu item' }, { status: 500 });
@@ -57,23 +58,26 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, ...data } = body;
+    const { id, ...updates } = body;
 
-    const item = await prisma.menuItem.update({
-      where: { id },
-      data: {
-        ...(data.name && { name: data.name }),
-        ...(data.description !== undefined && { description: data.description }),
-        ...(data.price && { price: data.price }),
-        ...(data.categoryId && { categoryId: data.categoryId }),
-        ...(data.image !== undefined && { image: data.image }),
-        ...(data.isAvailable !== undefined && { isAvailable: data.isAvailable }),
-        ...(data.costPerUnit && { costPerUnit: data.costPerUnit }),
-      },
-      include: { category: true },
-    });
+    const updateData: Record<string, any> = {};
+    if (updates.name) updateData.name = updates.name;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.price) updateData.price = updates.price;
+    if (updates.categoryId) updateData.category_id = updates.categoryId;
+    if (updates.image !== undefined) updateData.image = updates.image;
+    if (updates.isAvailable !== undefined) updateData.is_available = updates.isAvailable;
+    if (updates.costPerUnit) updateData.cost_per_unit = updates.costPerUnit;
 
-    return NextResponse.json(item);
+    const { data, error } = await supabase
+      .from('menu_items')
+      .update(updateData)
+      .eq('id', id)
+      .select('*, category:menu_categories(*)')
+      .single();
+
+    if (error) throw error;
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error updating menu item:', error);
     return NextResponse.json({ error: 'Error updating menu item' }, { status: 500 });
@@ -86,7 +90,9 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-    await prisma.menuItem.delete({ where: { id } });
+    const { error } = await supabase.from('menu_items').delete().eq('id', id);
+    if (error) throw error;
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting menu item:', error);
